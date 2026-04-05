@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรไฟล์ - เทศบาลเมืองชุมแสง</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="assets/js/api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#15803d',
+                            navy: '#1e3a8a',
+                            light: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans pb-24 h-screen overflow-y-auto">
+
+    <!-- Header overrides -->
+    <header class="bg-gradient-to-r from-brand-navy to-blue-800 text-white p-4 sticky top-0 z-50 shadow-md">
+        <h1 class="text-xl font-bold text-center">ข้อมูลส่วนตัว</h1>
+    </header>
+
+    <main class="max-w-md mx-auto p-4">
+        
+        <!-- Profile Card -->
+        <div class="bg-white rounded-2xl shadow p-6 mb-6 text-center relative overflow-hidden">
+            <!-- decorative background -->
+            <div class="absolute top-0 left-0 w-full h-24 bg-brand-green opacity-10"></div>
+            
+            <div class="relative z-10 flex flex-col items-center">
+                <div class="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-lg mb-3 overflow-hidden flex items-center justify-center text-gray-400 text-4xl">
+                    <i class="fas fa-user pr-1 mt-2"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800" id="profile-name">บุคคลทั่วไป</h2>
+                <p class="text-sm text-gray-500 mb-4 flex items-center"><i class="fas fa-phone-alt text-brand-green mr-2"></i> <span id="profile-phone">ไม่มีข้อมูล</span></p>
+                
+                <button onclick="document.getElementById('editProfileModal').classList.remove('hidden')" class="bg-blue-50 text-brand-navy border border-blue-200 px-6 py-2 rounded-full text-sm font-semibold shadow-sm hover:bg-blue-100 transition">
+                    <i class="fas fa-edit mr-1"></i> แก้ไขข้อมูลส่วนตัว
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mt-6 border-t border-gray-100 pt-4">
+                <div class="text-center">
+                    <p class="text-xs text-gray-500 font-semibold mb-1">คำร้องทั้งหมดของฉัน</p>
+                    <p class="text-2xl font-bold text-brand-navy" id="stat-total">0</p>
+                </div>
+                <div class="text-center border-l border-gray-100">
+                    <p class="text-xs text-gray-500 font-semibold mb-1">แก้ไขสำเร็จแล้ว</p>
+                    <p class="text-2xl font-bold text-brand-green" id="stat-resolved">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu List -->
+        <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
+            <a href="my_complaints.html" class="flex justify-between items-center p-4 border-b border-gray-100 hover:bg-gray-50 transition">
+                <div class="flex items-center text-gray-700">
+                    <div class="w-8 flex justify-center text-brand-green mr-2"><i class="fas fa-history"></i></div>
+                    <span class="font-medium">ประวัติการแจ้งเรื่องทั้งหมด</span>
+                </div>
+                <i class="fas fa-chevron-right text-sm text-gray-400"></i>
+            </a>
+            <a href="form.html" class="flex justify-between items-center p-4 border-b border-gray-100 hover:bg-gray-50 transition">
+                <div class="flex items-center text-gray-700">
+                    <div class="w-8 flex justify-center text-brand-green mr-2"><i class="fas fa-map-marked-alt"></i></div>
+                    <span class="font-medium">แจ้งเรื่องร้องเรียนใหม่ (ระบุพิกัด)</span>
+                </div>
+                <i class="fas fa-chevron-right text-sm text-gray-400"></i>
+            </a>
+            <a href="tel:056282271" class="flex justify-between items-center p-4 border-b border-gray-100 hover:bg-gray-50 transition">
+                <div class="flex items-center text-gray-700">
+                    <div class="w-8 flex justify-center text-brand-green mr-2"><i class="fas fa-question-circle"></i></div>
+                    <span class="font-medium">ติดต่อเทศบาล (โทร 056-282-271)</span>
+                </div>
+                <i class="fas fa-chevron-right text-sm text-gray-400"></i>
+            </a>
+        </div>
+
+        <!-- Log out -->
+        <div class="text-center">
+            <button onclick="logout()" class="text-red-500 font-semibold bg-white border border-red-100 shadow-sm px-6 py-3 rounded-xl w-full hover:bg-red-50 transition">
+                <i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ
+            </button>
+            <p class="text-[10px] text-gray-400 mt-4 border-t border-gray-300 pt-3">v1.2.0 (Build 2603)</p>
+        </div>
+
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">แก้ไขข้อมูลส่วนตัว</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อ-นามสกุล</label>
+                <input type="text" id="editName" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-brand-green focus:border-brand-green">
+            </div>
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+                <input type="tel" id="editPhone" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-brand-green focus:border-brand-green">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg font-semibold hover:bg-gray-50">ยกเลิก</button>
+                <button onclick="saveProfile()" class="px-4 py-2 bg-brand-green text-white rounded-lg font-semibold shadow hover:bg-green-700">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg px-2 py-2 flex justify-around items-center z-50 max-w-md left-1/2 transform -translate-x-1/2">
+        <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-home text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">หน้าแรก</span>
+        </a>
+        <a href="my_complaints.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-list-alt text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">คำร้องของฉัน</span>
+        </a>
+        <div class="w-1/5 flex justify-center relative -top-6">
+            <a href="form.html" class="bg-brand-green text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:bg-green-600 transition">
+                <i class="fas fa-plus text-2xl"></i>
+            </a>
+        </div>
+        <a href="notifications.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5 relative">
+            <i class="fas fa-bell text-xl mb-1 mt-1"></i>
+            <span class="absolute top-0 right-3 bg-red-500 w-2 h-2 rounded-full"></span>
+            <span class="text-[10px]">แจ้งเตือน</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center text-brand-green w-1/5">
+            <i class="fas fa-user-circle text-2xl mb-1"></i>
+            <span class="text-[10px] font-bold">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <script>
+        let currentProfile = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentProfile = await API.getUserProfile();
+            if (currentProfile) {
+                document.getElementById('profile-name').innerText = currentProfile.fullname || 'บุคคลทั่วไป';
+                document.getElementById('profile-phone').innerText = currentProfile.phone || '-';
+                
+                // Set values in modal
+                document.getElementById('editName').value = currentProfile.fullname !== 'บุคคลทั่วไป' ? currentProfile.fullname : '';
+                document.getElementById('editPhone').value = currentProfile.phone !== '-' ? currentProfile.phone : '';
+            }
+
+            const complaints = await API.getComplaints();
+            document.getElementById('stat-total').innerText = complaints.length;
+            document.getElementById('stat-resolved').innerText = complaints.filter(c => c.status === 'resolved').length;
+        });
+
+        async function saveProfile() {
+            const name = document.getElementById('editName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            
+            if (!name) { alert('กรุณาระบุชื่อ-นามสกุล'); return; }
+            
+            const newProfile = { fullname: name, phone: phone || '-' };
+            await API.saveUserProfile(newProfile);
+            
+            document.getElementById('profile-name').innerText = newProfile.fullname;
+            document.getElementById('profile-phone').innerText = newProfile.phone;
+            
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        async function logout() {
+            if (confirm('คุณต้องการออกจากระบบและลบข้อมูลส่วนตัวในหน้านี้หรือไม่?\n(ข้อมูลคำร้องเดิมจะยังคงอยู่)')) {
+            await API.clearUserProfile();
+                alert('ออกจากระบบเรียบร้อยแล้ว');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

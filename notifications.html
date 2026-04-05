@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งเตือน - เทศบาลเมืองชุมแสง</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="assets/js/api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#15803d',
+                            navy: '#1e3a8a',
+                            light: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans pb-24 h-screen overflow-y-auto">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-brand-navy to-blue-800 text-white p-4 sticky top-0 z-50 shadow-md">
+        <h1 class="text-xl font-bold text-center">การแจ้งเตือน</h1>
+    </header>
+
+    <main class="max-w-md mx-auto relative">
+        <div class="bg-white shadow-sm min-h-screen" id="notifications-list">
+            <!-- Notifications injected by JS -->
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg px-2 py-2 flex justify-around items-center z-50 max-w-md left-1/2 transform -translate-x-1/2">
+        <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-home text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">หน้าแรก</span>
+        </a>
+        <a href="my_complaints.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-list-alt text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">คำร้องของฉัน</span>
+        </a>
+        <div class="w-1/5 flex justify-center relative -top-6">
+            <a href="form.html" class="bg-brand-green text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:bg-green-600 transition">
+                <i class="fas fa-plus text-2xl"></i>
+            </a>
+        </div>
+        <a href="notifications.html" class="flex flex-col items-center text-brand-green w-1/5 relative">
+            <i class="fas fa-bell text-2xl mb-1"></i>
+            <span class="text-[10px] font-bold">แจ้งเตือน</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-user-circle text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">โปรไฟล์</span>
+        </a>
+    </nav>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const listEl = document.getElementById('notifications-list');
+            const complaints = await API.getComplaints();
+
+            let html = '';
+
+            if (complaints.length > 0) {
+                complaints.forEach((c) => {
+                    const dateObj = new Date(c.date);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - dateObj);
+                    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60)); 
+                    let timeStr = diffHours < 24 ? (diffHours <= 1 ? 'เพิ่งผ่านมาเมื่อกี้' : `${diffHours} ชั่วโมงที่แล้ว`) : `${Math.floor(diffHours/24)} วันที่แล้ว`;
+
+                    let icon = '';
+                    let bgColor = '';
+                    let title = '';
+                    let desc = '';
+                    let readClass = '';
+
+                    if (c.status === 'resolved') {
+                        icon = '<i class="fas fa-check"></i>';
+                        bgColor = 'bg-brand-green';
+                        title = 'คำร้องของคุณได้รับการแก้ไขแล้ว';
+                        desc = `คำร้องเลขที่ ${c.ticket_number} (${c.subject || c.type}) เจ้าหน้าที่ดำเนินการเสร็จสมบูรณ์แล้วครับ สนใจดูรายละเอียดเพิ่มเติมคลิก`;
+                        readClass = 'bg-green-50 hover:bg-green-100';
+                    } else if (c.status === 'in_progress') {
+                        icon = '<i class="fas fa-tools"></i>';
+                        bgColor = 'bg-yellow-400';
+                        title = 'เจ้าหน้าที่รับเรื่องและกำลังดำเนินการ';
+                        desc = `คำร้องเลขที่ ${c.ticket_number} ขณะนี้อยู่ในระหว่างการแก้ไขโดยเจ้าหน้าที่`;
+                        readClass = 'hover:bg-gray-50';
+                    } else {
+                        icon = '<i class="fas fa-paper-plane"></i>';
+                        bgColor = 'bg-blue-400';
+                        title = 'ระบบได้รับคำร้องของคุณแล้ว';
+                        desc = `คำร้องเลขที่ ${c.ticket_number} ถูกส่งเข้าระบบรอเจ้าหน้าที่ตรวจสอบเรียบร้อยแล้วครับ`;
+                        readClass = 'hover:bg-gray-50 opacity-75';
+                    }
+
+                    html += `
+                    <a href="my_complaints.html" class="block p-4 border-b border-gray-100 transition relative ${readClass}">
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 rounded-full text-white flex justify-center items-center flex-shrink-0 mr-3 mt-1 shadow-sm ${bgColor}">
+                                ${icon}
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">${title}</h4>
+                                <p class="text-xs text-gray-600 mt-1">${desc}</p>
+                                <p class="text-[10px] text-gray-400 mt-2"><i class="far fa-clock"></i> ${timeStr}</p>
+                            </div>
+                        </div>
+                    </a>
+                    `;
+                });
+            }
+
+            // System Notice always at bottom
+            html += `
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <div class="flex items-start">
+                    <div class="w-10 h-10 rounded-full bg-brand-navy text-white flex justify-center items-center flex-shrink-0 mr-3 mt-1 shadow-sm">
+                        <i class="fas fa-info"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-800">ยินดีต้อนรับสู่ระบบคำร้องออนไลน์</h4>
+                        <p class="text-xs text-gray-600 mt-1">คุณสามารถติดตามสถานะการแจ้งเรื่องของคุณได้ตลอด 24 ชั่วโมงผ่านหน้านี้</p>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            listEl.innerHTML = html;
+        });
+    </script>
+</body>
+</html>

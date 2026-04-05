@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบเจ้าหน้าที่ - เทศบาลเมืองชุมแสง</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#15803d',
+                            navy: '#1e3a8a',
+                            light: '#f3f4f6',
+                            dark: '#111827'
+                        }
+                    }
+                }
+            }
+        }
+
+        // Authentication Check
+        if (sessionStorage.getItem('staff_logged_in') !== 'true') {
+            window.location.replace('staff_login.html');
+        }
+
+        function logout() {
+            sessionStorage.removeItem('staff_logged_in');
+            sessionStorage.removeItem('staff_name');
+            window.location.replace('staff_login.html');
+        }
+    </script>
+    <style>
+        /* Mobile app styling adjustments */
+        body {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y; /* Prevent pull-to-refresh on some mobile browsers if needed, but pan-y allows scrolling */
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        /* Smooth transitions for tabs */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Modal transitions */
+        .modal-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal-drawer {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-drawer.active {
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-brand-green text-white shadow-md z-10 flex-shrink-0">
+        <div class="px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="assets/images/logo.png" alt="Logo" class="w-8 h-8 bg-white rounded-full p-0.5 mr-3">
+                <h1 class="font-bold text-lg leading-tight">ระบบเจ้าหน้าที่</h1>
+            </div>
+            <button onclick="logout()" class="p-2 text-white hover:bg-green-800 rounded-full transition-colors focus:outline-none">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-green-700 mt-1">
+            <button onclick="switchTab('active')" id="tab-active" class="flex-1 py-3 text-sm font-semibold text-center border-b-2 border-white text-white transition-colors duration-200">
+                <i class="fas fa-clipboard-list mr-1"></i> งานที่ต้องทำ (<span id="count-active">0</span>)
+            </button>
+            <button onclick="switchTab('history')" id="tab-history" class="flex-1 py-3 text-sm font-semibold text-center border-b-2 border-transparent text-green-200 transition-colors duration-200">
+                <i class="fas fa-check-circle mr-1"></i> ประวัติงาน (<span id="count-history">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto pb-6 relative w-full max-w-2xl mx-auto">
+        
+        <!-- Loading UI -->
+        <div id="loading" class="flex flex-col items-center justify-center p-12 text-gray-400 hidden">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3 text-brand-green"></i>
+            <p>กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <!-- Tab 1: Active Tasks (Pending, In Progress) -->
+        <div id="content-active" class="tab-content active p-4 space-y-4">
+            <!-- Cards injected by JS -->
+        </div>
+
+        <!-- Tab 2: History (Resolved, Rejected) -->
+        <div id="content-history" class="tab-content p-4 space-y-4">
+            <!-- Cards injected by JS -->
+        </div>
+
+    </main>
+
+    <!-- Detail Drawer Modal (Full-Screen mostly on Mobile) -->
+    <div id="detailDrawer" class="fixed inset-0 z-50 modal-overlay flex flex-col justify-end sm:justify-center sm:p-4">
+        <div class="absolute inset-0 bg-gray-900 bg-opacity-60" onclick="closeDetail()"></div>
+        
+        <div class="bg-white w-full sm:max-w-md sm:mx-auto sm:rounded-2xl rounded-t-2xl shadow-2xl modal-drawer h-[90vh] sm:h-auto max-h-[90vh] flex flex-col relative" id="drawerContent">
+            
+            <!-- Drawer Handle for mobile -->
+            <div class="w-full flex justify-center py-2 sm:hidden" onclick="closeDetail()">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            </div>
+
+            <!-- Header -->
+            <div class="px-5 py-3 border-b flex justify-between items-center bg-white sticky top-0 sm:rounded-t-2xl z-10">
+                <div>
+                    <span class="text-xs text-brand-green font-bold bg-green-100 px-2 py-1 rounded" id="detailType">ประเภท</span>
+                    <h2 class="text-lg font-bold text-gray-800 mt-1" id="detailTicket">Ticket ID</h2>
+                </div>
+                <button onclick="closeDetail()" class="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-5 pb-24">
+                <div class="mb-4">
+                    <p class="text-xl font-bold text-brand-navy mb-2" id="detailSubject">หัวข้อปัญหา</p>
+                    <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100" id="detailDesc">รายละเอียดปัญหา...</p>
+                </div>
+
+                <!-- Reporter Info -->
+                <div class="flex items-center p-3 bg-blue-50 rounded-xl mb-4 border border-blue-100">
+                    <div class="w-10 h-10 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center font-bold mr-3 object-cover">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800" id="detailName">ชื่อผู้แจ้ง</p>
+                        <a href="tel:0000000000" id="detailPhoneBtn" class="text-xs text-blue-600 font-medium mt-0.5 inline-block hover:underline">
+                            <i class="fas fa-phone-alt mr-1"></i> <span id="detailPhone">000-000-0000</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Location / Map -->
+                <div class="mb-5">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-800"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> สถานที่เกิดเหตุ</h3>
+                        <a href="#" target="_blank" id="detailMapBtn" class="bg-brand-navy text-white text-xs px-3 py-1.5 rounded-lg shadow-sm font-semibold flex items-center hidden">
+                            <i class="fas fa-location-arrow mr-1"></i> นำทาง
+                        </a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2 truncate" id="detailAddress">ที่อยู่</p>
+                    
+                    <div class="w-full h-40 bg-gray-200 rounded-xl overflow-hidden relative" id="mapSection">
+                        <iframe id="detailMap" class="w-full h-full border-0 absolute inset-0 hidden" frameborder="0" allowfullscreen></iframe>
+                        <div id="noMapText" class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm italic">
+                            ไม่พบพิกัดแผนที่
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attached User Image -->
+                <div class="mb-4" id="userImageSection">
+                    <h3 class="text-sm font-bold text-gray-800 mb-2"><i class="fas fa-image text-gray-400 mr-1"></i> รูปภาพจากผู้แจ้ง</h3>
+                    <img id="detailImage" src="" class="w-full h-48 object-cover rounded-xl border border-gray-200" alt="Problem image">
+                </div>
+
+                <!-- Resolution Detail (Visible only in history tab) -->
+                <div id="resolutionSection" class="hidden mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-brand-green mb-3"><i class="fas fa-clipboard-check mr-1"></i> ข้อมูลการปฏิบัติงาน</h3>
+                    <div class="bg-green-50 rounded-xl p-4 border border-green-100">
+                        <p class="text-xs text-gray-500 mb-1">สถานะ: <span id="resStatusBadge"></span></p>
+                        <p class="text-sm text-gray-800 font-medium mb-2" id="resNote">-</p>
+                        <div id="resImageWrapper" class="hidden mt-3">
+                            <p class="text-xs text-gray-500 mb-1">ภาพหลักฐาน:</p>
+                            <img id="resImage" src="" class="w-full h-32 object-cover rounded-lg border border-gray-200">
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-3 pt-2 border-t border-green-200" id="resDateInfo"><i class="fas fa-clock mr-1"></i> อัปเดตเมื่อ: -</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sticky Actions (Bottom) for Active tasks -->
+            <div id="actionButtons" class="absolute bottom-0 left-0 right-0 bg-white border-t p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex space-x-3 sm:rounded-b-2xl z-20">
+                <button onclick="openActionModal('issue')" class="flex-1 bg-white border-2 border-red-500 text-red-500 font-bold py-3 rounded-xl shadow-sm hover:bg-red-50">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> แจ้งปัญหา
+                </button>
+                <button onclick="openActionModal('resolve')" class="flex-1 bg-brand-green text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-700">
+                    <i class="fas fa-check-circle mr-1"></i> ปิดงาน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Modal (Take Photo / Note) -->
+    <div id="actionModal" class="fixed inset-0 z-[60] modal-overlay flex flex-col justify-end sm:justify-center sm:p-4">
+        <div class="absolute inset-0 bg-gray-900 bg-opacity-60" onclick="closeActionModal()"></div>
+        
+        <div class="bg-white w-full sm:max-w-md sm:mx-auto sm:rounded-2xl rounded-t-2xl shadow-2xl modal-drawer flex flex-col relative">
+            <div class="px-5 py-4 border-b flex justify-between items-center bg-gray-50 sm:rounded-t-2xl">
+                <h2 class="text-lg font-bold text-gray-800" id="actionModalTitle">บันทึกผลการทำงาน</h2>
+                <button onclick="closeActionModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto max-h-[70vh]">
+                <!-- Step 1: Photo Upload -->
+                <div class="mb-5">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">ถ่ายรูป / แนบรูปหลักฐาน <span class="text-red-500">*</span></label>
+                    
+                    <div id="photoContainer" class="relative group cursor-pointer" onclick="document.getElementById('taskPhoto').click()">
+                        <div id="photoPlaceholder" class="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 flex flex-col items-center justify-center text-gray-500 hover:border-brand-green hover:bg-green-50 transition-colors">
+                            <i class="fas fa-camera text-3xl mb-2"></i>
+                            <span class="text-sm font-medium">แตะเพื่อถ่ายรูป</span>
+                        </div>
+                        <img id="photoPreview" class="hidden w-full h-40 object-cover rounded-xl shadow-sm">
+                        <div id="photoChangeBtn" class="hidden absolute top-2 right-2 bg-gray-900 bg-opacity-70 text-white rounded-full p-2 hover:bg-opacity-100">
+                            <i class="fas fa-sync-alt text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Using file input, 'capture' attribute opens camera on mobile -->
+                    <input type="file" id="taskPhoto" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoSelect(event)">
+                </div>
+
+                <!-- Step 2: Note / Reason -->
+                <div class="mb-5" id="noteContainer">
+                    <label class="block text-sm font-bold text-gray-700 mb-2" id="actionNoteLabel">รายละเอียดการแก้ไข</label>
+                    <textarea id="taskNote" rows="3" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-sm" placeholder="พิมพ์ข้อความอธิบาย..."></textarea>
+                </div>
+
+                <!-- Step 3: GPS Check-in (Simulated UI) -->
+                <div class="mb-5 bg-blue-50 p-3 rounded-xl border border-blue-100 flex items-start" id="gpsContainer">
+                    <i class="fas fa-map-marker-alt text-blue-500 mt-0.5 mr-2"></i>
+                    <div>
+                        <p class="text-xs font-bold text-blue-800 leading-tight">บันทึกพิกัดอัตโนมัติ</p>
+                        <p class="text-[10px] text-blue-600">ระบบจะแนบตำแหน่งปัจจุบันของคุณเพื่อใช้เป็นหลักฐานยืนยันการลงพื้นที่</p>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="submitAction()" id="submitActionBtn" class="w-full font-bold text-white py-3.5 rounded-xl shadow-lg transition-all flex justify-center items-center">
+                        <i class="fas fa-paper-plane mr-2"></i> ยืนยันข้อมูล
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script>
+        const typeLabels = {
+            'maintenance': { label: 'ไฟฟ้า/ประปา', color: 'bg-blue-100 text-blue-800' },
+            'garbage': { label: 'ปัญหาขยะ', color: 'bg-green-100 text-green-800' },
+            'road': { label: 'ถนนชำรุด', color: 'bg-orange-100 text-orange-800' },
+            'flood': { label: 'แจ้งน้ำท่วม', color: 'bg-cyan-100 text-cyan-800' },
+            'other': { label: 'เรื่องอื่นๆ', color: 'bg-gray-100 text-gray-800' }
+        };
+
+        let currentActiveIndex = null;
+        let actionType = null; // 'resolve' or 'issue'
+        let cachedComplaints = [];
+
+        async function loadTasks() {
+            cachedComplaints = await API.getComplaints();
+            
+            const activeTasks = [];
+            const historyTasks = [];
+
+            cachedComplaints.forEach((c, index) => {
+                c._originalIndex = index; // Keep track of original index
+                if (c.status === 'pending' || c.status === 'in_progress') {
+                    activeTasks.push(c);
+                } else if (c.status === 'resolved' || c.status === 'rejected') {
+                    historyTasks.push(c);
+                }
+            });
+
+            // Sort active by date desc
+            activeTasks.sort((a,b) => new Date(b.date) - new Date(a.date));
+            historyTasks.sort((a,b) => new Date(b.resolved_date || b.date) - new Date(a.resolved_date || a.date));
+
+            document.getElementById('count-active').innerText = activeTasks.length;
+            document.getElementById('count-history').innerText = historyTasks.length;
+
+            renderCards('content-active', activeTasks, true);
+            renderCards('content-history', historyTasks, false);
+        }
+
+        function renderCards(containerId, tasks, isActiveTab) {
+            const container = document.getElementById(containerId);
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-12 text-gray-400 mt-10">
+                        <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                            <i class="fas fa-folder-open text-2xl text-gray-400"></i>
+                        </div>
+                        <p class="font-medium text-gray-500">ไม่มีข้อมูลรายการ</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            tasks.forEach(c => {
+                const typeObj = typeLabels[c.type] || typeLabels['other'];
+                const dateObj = new Date(c.date);
+                const timeStr = dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) + ' เวลา ' + dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + 'น.';
+                
+                // Card Status Indicator
+                let statusDot = '';
+                if(c.status === 'pending') statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span><span class="text-xs text-red-600 font-bold">รอรับงาน</span>';
+                else if(c.status === 'in_progress') statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-yellow-500 mr-1.5"></span><span class="text-xs text-yellow-600 font-bold">กำลังทำ</span>';
+                else if(c.status === 'resolved') statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-green-500 mr-1.5"></span><span class="text-xs text-green-600 font-bold">ปิดงานแล้ว</span>';
+                else if(c.status === 'rejected') statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-gray-500 mr-1.5"></span><span class="text-xs text-gray-600 font-bold">มีปัญหา/ยกเลิก</span>';
+
+                let bgClass = "bg-white";
+                if(c.status === 'resolved') bgClass = "bg-gray-50 border-l-4 border-l-green-500";
+                
+                html += `
+                <div class="${bgClass} rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer active:scale-[0.98]" onclick="openDetail(${c._originalIndex})">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${typeObj.color}">${typeObj.label}</span>
+                        <div class="flex items-center bg-gray-100 px-2 py-1 rounded-full text-[10px]">
+                            <i class="far fa-clock mr-1 text-gray-400"></i> ${timeStr}
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-1">${c.subject || 'ไม่มีหัวข้อ'}</h3>
+                    <p class="text-xs text-gray-500 mb-3 line-clamp-2">${c.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</p>
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <div class="flex items-center text-xs font-semibold text-gray-600">
+                            <i class="fas fa-map-marker-alt text-red-400 mr-1"></i> ${c.subdistrict || 'ชุมแสง'}
+                        </div>
+                        <div class="flex items-center">
+                            ${statusDot}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            $('.tab-content').removeClass('active');
+            $(`button[id^='tab-']`).removeClass('border-white text-white').addClass('border-transparent text-green-200');
+            
+            $(`#content-${tabId}`).addClass('active');
+            $(`#tab-${tabId}`).removeClass('border-transparent text-green-200').addClass('border-white text-white');
+        }
+
+        // Detail Drawer
+        function openDetail(index) {
+            currentActiveIndex = index;
+            const c = cachedComplaints[index];
+            const typeObj = typeLabels[c.type] || typeLabels['other'];
+
+            $('#detailTicket').text(c.ticket_number);
+            $('#detailType').text(typeObj.label).attr('class', `text-[10px] font-bold px-2 py-1 rounded ${typeObj.color}`);
+            $('#detailSubject').text(c.subject || 'ไม่มีหัวข้อ');
+            $('#detailDesc').text(c.details || '-');
+            $('#detailName').text(c.fullname);
+            
+            $('#detailPhone').text(c.phone || '-');
+            $('#detailPhoneBtn').attr('href', `tel:${c.phone || ''}`);
+
+            // Address Handling
+            let addrParts = [];
+            if(c.house_number && c.house_number !== '-') addrParts.push(`เลขที่ ${c.house_number}`);
+            if(c.village_or_road && c.village_or_road !== '-') addrParts.push(`ถ./ซอย ${c.village_or_road}`);
+            if(c.subdistrict && c.subdistrict !== '-') addrParts.push(`ต.${c.subdistrict}`);
+            addrParts.push(`อ.ชุมแสง จ.นครสวรรค์`);
+            $('#detailAddress').text(addrParts.join(' ') || '-');
+
+            // Image Handle
+            if (c.image) {
+                $('#detailImage').attr('src', c.image);
+                $('#userImageSection').show();
+            } else {
+                $('#userImageSection').hide();
+            }
+
+            // Map Handle
+            if (c.latitude && c.longitude) {
+                const directLink = `https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}`;
+                $('#detailMapBtn').attr('href', directLink).removeClass('hidden').addClass('inline-flex');
+                
+                // Only load iframe when modal opens to save data
+                const mapUrl = `https://maps.google.com/maps?q=${c.latitude},${c.longitude}&hl=th&z=16&output=embed`;
+                $('#detailMap').attr('src', mapUrl).removeClass('hidden');
+                $('#noMapText').addClass('hidden');
+            } else {
+                $('#detailMapBtn').addClass('hidden');
+                $('#detailMap').addClass('hidden').attr('src', '');
+                $('#noMapText').removeClass('hidden');
+            }
+
+            // View State (Active vs History)
+            const isActive = (c.status === 'pending' || c.status === 'in_progress');
+            if (isActive) {
+                $('#actionButtons').show();
+                
+                // If pending, visually change logic or Auto-Change to "In Progress" in real app when viewed.
+                // Here we leave it, the buttons are "Issue" or "Resolve".
+                $('#resolutionSection').hide();
+            } else {
+                $('#actionButtons').hide();
+                $('#resolutionSection').removeClass('hidden').show();
+                
+                // Fill resolution data
+                let badgeRaw = '';
+                if(c.status === 'resolved') badgeRaw = '<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> ปิดงานสำเร็จ</span>';
+                else badgeRaw = '<span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> มีปัญหา / ดำเนินการไม่ได้</span>';
+                
+                $('#resStatusBadge').html(badgeRaw);
+                $('#resNote').text(c.resolved_note || '-');
+                
+                if (c.resolved_image) {
+                    $('#resImageWrapper').removeClass('hidden').show();
+                    $('#resImage').attr('src', c.resolved_image);
+                } else {
+                    $('#resImageWrapper').hide();
+                }
+
+                if(c.resolved_date) {
+                    const rDate = new Date(c.resolved_date);
+                    $('#resDateInfo').html(`<i class="fas fa-clock mr-1"></i> ปิดงานเมื่อ: ${rDate.toLocaleDateString('th-TH', {day:'2-digit', month:'short'})} เวลา ${rDate.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}น.`);
+                } else {
+                    $('#resDateInfo').empty();
+                }
+            }
+
+            // Show Drawer
+            $('#detailDrawer').addClass('active');
+            setTimeout(() => {
+                $('#drawerContent').addClass('active');
+            }, 10);
+        }
+
+        function closeDetail() {
+            $('#drawerContent').removeClass('active');
+            setTimeout(() => {
+                $('#detailDrawer').removeClass('active');
+            }, 300);
+        }
+
+        // Action Modal (Take Photo & Note)
+        function openActionModal(type) {
+            actionType = type;
+            
+            // Reset Form
+            $('#taskPhoto').val('');
+            $('#photoPreview').attr('src', '').addClass('hidden');
+            $('#photoPlaceholder').show();
+            $('#photoChangeBtn').addClass('hidden');
+            $('#taskNote').val('');
+
+            if(type === 'resolve') {
+                $('#actionModalTitle').text('บันทึกผลการปฏิบัติงาน');
+                $('#actionNoteLabel').text('รายละเอียดการแก้ไข / สาเหตุปัญหา');
+                $('#submitActionBtn').attr('class', 'w-full font-bold text-white py-3.5 rounded-xl shadow-lg transition-all flex justify-center items-center bg-brand-green hover:bg-green-700').html('<i class="fas fa-check-circle mr-2"></i> ปิดงาน (Resolved)');
+                $('#gpsContainer').show();
+            } else {
+                $('#actionModalTitle').text('แจ้งปัญหา/อุปสรรค');
+                $('#actionNoteLabel').text('ระบุสาเหตุที่ไม่สามารถดำเนินการได้');
+                $('#submitActionBtn').attr('class', 'w-full font-bold text-white py-3.5 rounded-xl shadow-lg transition-all flex justify-center items-center bg-red-500 hover:bg-red-600').html('<i class="fas fa-exclamation-triangle mr-2"></i> แจ้งไปยังแอดมิน');
+                $('#gpsContainer').hide();
+            }
+
+            $('#actionModal').addClass('active');
+            setTimeout(() => {
+                $('#actionModal .modal-drawer').addClass('active');
+            }, 10);
+        }
+
+        function closeActionModal() {
+            $('#actionModal .modal-drawer').removeClass('active');
+            setTimeout(() => {
+                $('#actionModal').removeClass('active');
+            }, 300);
+        }
+
+        // Handle Photo Selection
+        function handlePhotoSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#photoPlaceholder').hide();
+                    $('#photoPreview').attr('src', e.target.result).removeClass('hidden');
+                    $('#photoChangeBtn').removeClass('hidden').show();
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Final Submit
+        async function submitAction() {
+            const note = $('#taskNote').val().trim();
+            const photoSrc = $('#photoPreview').attr('src');
+
+            if (!photoSrc) {
+                alert('กรุณาอัปโหลดรูปภาพหลักฐานการทำงาน');
+                return;
+            }
+
+            // Prepare button for loading
+            const btn = document.getElementById('submitActionBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังบันทึกข้อมูล...';
+            btn.disabled = true;
+
+            // Generate Fake Lat/Lng for check-in demo
+            const staffLat = "15.82" + Math.floor(Math.random() * 9999);
+            const staffLng = "100.28" + Math.floor(Math.random() * 9999);
+
+            const targetStatus = actionType === 'resolve' ? 'resolved' : 'rejected';
+            const ticketNumber = cachedComplaints[currentActiveIndex].ticket_number;
+            
+            const extraData = {
+                resolved_note: note,
+                resolved_image: photoSrc
+            };
+
+            if (actionType === 'resolve') {
+                extraData.staff_lat = staffLat;
+                extraData.staff_lng = staffLng;
+            }
+
+            // ========== API Integration ==========
+            const success = await API.updateStatus(ticketNumber, targetStatus, extraData);
+
+            // Cleanup & reload
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            
+            if (success) {
+                closeActionModal();
+                closeDetail();
+                await loadTasks();
+                alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+            } else {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อกรุณาลองใหม่อีกครั้ง');
+            }
+        }
+
+        // Init
+        $(document).ready(function() {
+            loadTasks();
+        });
+    </script>
+</body>
+</html>

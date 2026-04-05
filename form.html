@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ยื่นคำร้องใหม่ - เทศบาลเมืองชุมแสง</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Leaflet.js for Interactive Map Picker -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- API Service -->
+    <script src="assets/js/api.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#15803d',
+                            navy: '#1e3a8a',
+                            light: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans pb-20">
+
+    <!-- Header / Nav Back -->
+    <header class="bg-gradient-to-r from-brand-navy to-blue-800 text-white p-4 sticky top-0 z-50 shadow-md flex items-center">
+        <a href="index.html" class="mr-4 text-xl"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="text-xl font-bold flex-1">ยื่นคำร้องใหม่</h1>
+    </header>
+
+    <main class="max-w-md mx-auto p-4">
+        <form id="complaintForm" onsubmit="submitForm(event)" class="bg-white p-6 rounded-2xl shadow">
+            
+            <input type="hidden" name="line_user_id" id="line_user_id" value=""> <!-- จะถูกเติมด้วย JS ถ้ามี LIFF -->
+            <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+            <input type="hidden" name="resolved_address" id="resolved_address_input">
+
+            <!-- ประเภทคำร้อง -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">ประเภทคำร้อง <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <select name="complaint_type" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3 appearance-none">
+                        <option value="" disabled selected>-- เลือกประเภท --</option>
+                        <option value="maintenance">แจ้งซ่อมไฟฟ้า/ประปา</option>
+                        <option value="garbage">ปัญหาขยะ/สิ่งปฏิกูล</option>
+                        <option value="road">ถนนชำรุด/พัง</option>
+                        <option value="flood">แจ้งน้ำท่วมขัง</option>
+                        <option value="other">เรื่องอื่นๆ</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เรื่องร้องเรียน -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">เรื่องที่ร้องเรียน (หัวข้อ) <span class="text-red-500">*</span></label>
+                <input type="text" name="subject" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="เช่น ขอความอนุเคราะห์สูบน้ำขัง">
+            </div>
+
+            <!-- ชื่อ-สกุล -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">ชื่อผู้แจ้งเรื่อง <span class="text-red-500">*</span></label>
+                <div class="flex space-x-3">
+                    <div class="w-1/3 relative">
+                        <select name="prefix" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3 appearance-none">
+                            <option value="" disabled selected>คำนำหน้า</option>
+                            <option value="นาย">นาย</option>
+                            <option value="นาง">นาง</option>
+                            <option value="นางสาว">นางสาว</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                    <input type="text" name="fullname" required class="w-2/3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="ชื่อ-นามสกุล">
+                </div>
+            </div>
+
+            <!-- อายุ -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">อายุ <span class="text-red-500">*</span></label>
+                <input type="number" name="age" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" min="15" max="150" placeholder="ระบุอายุ (ขั้นต่ำ 15)">
+            </div>
+
+            <!-- ที่อยู่ -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">ที่อยู่ <span class="text-red-500">*</span></label>
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <input type="text" name="house_number" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="บ้านเลขที่, ม.">
+                    <input type="text" name="village_or_road" class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="ถนน / ซอย">
+                </div>
+                <div class="relative">
+                    <select name="subdistrict" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3 appearance-none">
+                        <option value="" disabled selected>-- เลือกตำบล --</option>
+                        <option value="ชุมแสง">ตำบลชุมแสง</option>
+                        <option value="ทับกฤช">ตำบลทับกฤช</option>
+                        <option value="พิกุล">ตำบลพิกุล</option>
+                        <option value="เกยไชย">ตำบลเกยไชย</option>
+                        <option value="ท่าไม้">ตำบลท่าไม้</option>
+                        <option value="บางเคียน">ตำบลบางเคียน</option>
+                        <option value="หนองกระเจา">ตำบลหนองกระเจา</option>
+                        <option value="พันลาน">ตำบลพันลาน</option>
+                        <option value="โคกหม้อ">ตำบลโคกหม้อ</option>
+                        <option value="หนองโก">ตำบลหนองโก</option>
+                        <option value="ฆะมัง">ตำบลฆะมัง</option>
+                        <option value="ทับกฤชใต้">ตำบลทับกฤชใต้</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เบอร์โทร -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">เบอร์โทรศัพท์ติดต่อ <span class="text-red-500">*</span></label>
+                <input type="tel" name="phone" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="08xxxxxxxx">
+            </div>
+
+            <!-- จุดเกิดเหตุ / รายละเอียด -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">จุดเกิดเหตุ / รายละเอียด <span class="text-red-500">*</span></label>
+                <textarea name="details" rows="3" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="อธิบายสถานที่เกิดเหตุ (เช่น หน้าตลาดสด, ปากซอย) และรายละเอียดปัญหาที่พบ..."></textarea>
+            </div>
+
+            <!-- พิกัด GPS -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">พิกัดสถานที่ (แผนที่) <span class="text-red-500">*</span></label>
+                <button type="button" onclick="getLocation()" class="w-full bg-blue-50 text-blue-600 border border-blue-200 rounded-lg p-3 font-semibold flex items-center justify-center hover:bg-blue-100 transition">
+                    <i class="fas fa-map-marker-alt mr-2 text-xl"></i> ดึงพิกัดปัจจุบัน
+                </button>
+                <p id="location-status" class="text-xs text-gray-500 mt-2 text-center">ยังไม่ได้ดึงพิกัด</p>
+                
+                <!-- Google Maps Container (For Accurate GPS) -->
+                <div id="google-map-container" class="mt-3 hidden rounded-lg overflow-hidden border border-gray-300 shadow-sm">
+                    <iframe id="google-map" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+
+                <!-- Leaflet Map Container (For Manual Fallback) -->
+                <div id="leaflet-map-container" class="mt-3 hidden rounded-lg overflow-hidden border border-gray-300 shadow-sm relative">
+                    <div id="interactive-map" style="width: 100%; height: 250px;"></div>
+                    <div class="absolute bottom-2 left-2 z-[1000] bg-white text-xs px-2 py-1 rounded shadow text-gray-700 font-semibold opacity-90 pointer-events-none">
+                        <i class="fas fa-arrows-alt text-brand-green"></i> เลื่อนหมุดเพื่อเปลี่ยนตำแหน่ง
+                    </div>
+                </div>
+
+                <!-- แสดงผลที่อยู่จากการปักหมุด -->
+                <p id="resolved-address" class="text-sm text-gray-700 mt-2 text-center bg-gray-50 p-2 rounded border border-gray-200 hidden"></p>
+            </div>
+
+            <!-- ภาพปัญหา -->
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">อัปโหลดรูปภาพปัญหา <span class="text-red-500">*</span></label>
+                <div class="flex items-center justify-center w-full">
+                    <label id="image_upload_label" for="problem_icon" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 overflow-hidden relative">
+                        <div id="image_upload_placeholder" class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-camera text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500 font-semibold">แตะเพื่อถ่ายรูป / เลือกรูป</p>
+                        </div>
+                        <img id="image_preview" class="absolute inset-0 w-full h-full object-cover hidden" alt="รูปภาพปัญหา">
+                        <input id="problem_icon" name="problem_image" type="file" accept="image/*" class="hidden" onchange="previewImage(event)" />
+                    </label>
+                </div>
+                <div id="image_change_btn" class="flex justify-center mt-2 space-x-4 hidden">
+                    <label for="problem_icon" class="text-brand-green text-sm font-semibold cursor-pointer hover:underline">
+                        <i class="fas fa-sync-alt mr-1"></i> เปลี่ยนรูปภาพ
+                    </label>
+                    <button type="button" onclick="removeImage()" class="text-red-500 text-sm font-semibold cursor-pointer hover:underline focus:outline-none">
+                        <i class="fas fa-times mr-1"></i> เลิกเลือกรูป
+                    </button>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="w-full text-white bg-brand-green hover:bg-green-700 font-bold rounded-full text-lg px-5 py-4 text-center shadow-lg transition">
+                ส่งคำร้อง <i class="fas fa-paper-plane ml-2"></i>
+            </button>
+        </form>
+    </main>
+
+    <script>
+        let map;
+        let marker;
+        // พิกัดเริ่มต้นเทศบาลเมืองชุมแสง นครสวรรค์
+        const defaultLat = 15.965;
+        const defaultLng = 100.306;
+
+        function previewImage(event) {
+            const input = event.target;
+            const preview = document.getElementById('image_preview');
+            const placeholder = document.getElementById('image_upload_placeholder');
+            const changeBtn = document.getElementById('image_change_btn');
+            const label = document.getElementById('image_upload_label');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // Update the image source to the generated blob/dataURL
+                    preview.src = e.target.result;
+                    // Show the image, hide the placeholder
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    // Remove dashed border and add a solid one
+                    label.classList.remove('border-dashed', 'border-gray-300');
+                    label.classList.add('border-solid', 'border-brand-green');
+                    // Show the "change image" explicit button below
+                    changeBtn.classList.remove('hidden');
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage() {
+            const input = document.getElementById('problem_icon');
+            const preview = document.getElementById('image_preview');
+            const placeholder = document.getElementById('image_upload_placeholder');
+            const changeBtn = document.getElementById('image_change_btn');
+            const label = document.getElementById('image_upload_label');
+
+            // Clear the file input
+            input.value = '';
+            
+            // Revert UI to initial state
+            preview.src = '';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            label.classList.remove('border-solid', 'border-brand-green');
+            label.classList.add('border-dashed', 'border-gray-300');
+            changeBtn.classList.add('hidden');
+        }
+
+        function showGoogleMap(lat, lng) {
+            document.getElementById('leaflet-map-container').classList.add('hidden');
+            const gmapContainer = document.getElementById('google-map-container');
+            const mapIframe = document.getElementById('google-map');
+            
+            mapIframe.src = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+            gmapContainer.classList.remove('hidden');
+        }
+
+        async function fetchAddress(lat, lng) {
+            const displayEl = document.getElementById('resolved-address');
+            displayEl.innerHTML = '<i class="fas fa-spinner fa-spin text-brand-green"></i> กำลังระบุตำแหน่งที่อยู่...';
+            displayEl.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=th`);
+                const data = await response.json();
+                if(data && data.address) {
+                    let addr = data.address;
+                    let parts = [];
+                    if (addr.village || addr.neighbourhood) parts.push(addr.village || addr.neighbourhood);
+                    if (addr.road) parts.push('ถนน' + addr.road);
+                    if (addr.suburb || addr.subdistrict || addr.quarter) parts.push('ตำบล' + (addr.subdistrict || addr.suburb || addr.quarter));
+                    if (addr.city || addr.town || addr.district) parts.push('อำเภอ' + (addr.district || addr.city || addr.town));
+                    
+                    let finalAddress = parts.join(' ') || data.display_name;
+                    displayEl.innerHTML = `<i class="fas fa-map-pin text-red-500 mr-1"></i> <strong>ตำแหน่งหมุด:</strong> ${finalAddress}`;
+                    document.getElementById('resolved_address_input').value = finalAddress;
+                } else {
+                    displayEl.innerHTML = `<i class="fas fa-exclamation-circle text-orange-500 mr-1"></i> ไม่สามารถระบุชื่อที่อยู่ได้ (บันทึกพิกัดแล้ว)`;
+                    document.getElementById('resolved_address_input').value = '';
+                }
+            } catch(e) {
+                displayEl.innerHTML = `<i class="fas fa-exclamation-circle text-orange-500 mr-1"></i> ไม่สามารถระบุชื่อที่อยู่ได้ (บันทึกพิกัดแล้ว)`;
+                document.getElementById('resolved_address_input').value = '';
+            }
+        }
+
+        function initLeafletMap(lat, lng) {
+            document.getElementById('google-map-container').classList.add('hidden');
+            const mapContainer = document.getElementById('leaflet-map-container');
+            mapContainer.classList.remove('hidden');
+
+            // Set inputs
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+
+            // ถ้ามีแผนที่อยู่แล้ว ให้ขยับจุดอย่างเดียว
+            if (map) {
+                const newLatLng = new L.LatLng(lat, lng);
+                map.setView(newLatLng, 15);
+                marker.setLatLng(newLatLng);
+                return;
+            }
+
+            // ขอบเขตเขตอำเภอชุมแสง (โดยประมาณ)
+            const chumsaengBounds = [
+                [15.80, 100.15], // มุมซ้ายล่าง (Southwest)
+                [16.10, 100.50]  // มุมขวาบน (Northeast)
+            ];
+
+            // สร้างแผนที่ใหม่ด้วย Leaflet พร้อมจำกัดขอบเขต
+            map = L.map('interactive-map', {
+                maxBounds: chumsaengBounds,
+                maxBoundsViscosity: 1.0,
+                minZoom: 11
+            }).setView([lat, lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap - เทศบาลเมืองชุมแสง'
+            }).addTo(map);
+
+            // สร้างหมุดที่สามารถลากเพื่อขยับจุดได้
+            marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+            
+            // ป้องกันไม่ให้ลากหมุดออกนอกอำเภอชุมแสง
+            marker.on('drag', function(e) {
+                const pos = e.target.getLatLng();
+                const lat = Math.min(Math.max(pos.lat, 15.80), 16.10);
+                const lng = Math.min(Math.max(pos.lng, 100.15), 100.50);
+                if (pos.lat !== lat || pos.lng !== lng) {
+                    marker.setLatLng([lat, lng]);
+                }
+            });
+
+            // เมื่อโดนลากหมุดไปที่ไหน อัปเดตพิกัด
+            marker.on('dragend', function (e) {
+                const newPos = e.target.getLatLng();
+                document.getElementById('latitude').value = newPos.lat;
+                document.getElementById('longitude').value = newPos.lng;
+                
+                const status = document.getElementById('location-status');
+                status.innerHTML = `<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> ปรับพิกัดด้วยตนเองสำเร็จ (${newPos.lat.toFixed(4)}, ${newPos.lng.toFixed(4)})</span>`;
+                
+                fetchAddress(newPos.lat, newPos.lng);
+            });
+            
+            // ทำให้แผนที่รีเฟรชขนาดได้ถูกต้องเมื่อมันแสดงครั้งแรก
+            setTimeout(() => { map.invalidateSize(); }, 300);
+        }
+
+        function getLocation() {
+            const status = document.getElementById('location-status');
+            status.textContent = "กำลังค้นหาพิกัด...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        let lat = position.coords.latitude;
+                        let lng = position.coords.longitude;
+                        
+                        // อัปเดตพิกัดเบื้องต้นก่อน
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lng;
+                        
+                        // เช็คว่าพิกัดพ้นอำเภอชุมแสงหรือไม่? (ถ้าใช่ แสดงว่าน่าจะกดจากที่อื่น)
+                        const isOutsideChumsaeng = lat < 15.80 || lat > 16.10 || lng < 100.15 || lng > 100.50;
+
+                        if (isOutsideChumsaeng) {
+                            lat = defaultLat;
+                            lng = defaultLng;
+                            status.innerHTML = `<span class="text-orange-500 font-bold"><i class="fas fa-exclamation-triangle"></i> คุณอยู่นอกพื้นที่อำเภอชุมแสง ระบบพามาที่ตั้งค่าเริ่มต้น (เลื่อนหมุดเพื่อปักพิกัดจริง)</span>`;
+                            initLeafletMap(lat, lng);
+                            fetchAddress(lat, lng);
+                        } else {
+                            status.innerHTML = `<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> ดึงพิกัดสำเร็จ (${lat.toFixed(4)}, ${lng.toFixed(4)})</span>`;
+                            showGoogleMap(lat, lng);
+                            fetchAddress(lat, lng);
+                        }
+                    },
+                    function(error) {
+                        console.error('GPS error:', error);
+                        status.innerHTML = `<span class="text-orange-500 font-bold"><i class="fas fa-exclamation-triangle"></i> หาพิกัดไม่พบ ระบบพามาที่ชุมแสง เลื่อนหมุดเพื่อปักพิกัดด้วยตนเอง</span>`;
+                        // Fallback ไปที่ชุมแสง นครสวรรค์
+                        initLeafletMap(defaultLat, defaultLng);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                status.innerHTML = "อุปกรณ์ไม่รองรับ GPS";
+            }
+        }
+
+        async function submitForm(event) {
+            event.preventDefault(); // Prevent standard form submission
+
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            // Custom Validate Image
+            const fileInput = document.getElementById('problem_icon');
+            if (fileInput.files.length === 0) {
+                alert('⚠️ กรุณาอัปโหลดรูปภาพปัญหาด้วยครับ');
+                return; // Stop submission
+            }
+
+            // Get current timestamp
+            const now = new Date();
+            const yearStr = now.getFullYear().toString().slice(-2);
+            const monthStr = ('0' + (now.getMonth() + 1)).slice(-2);
+            const dateStr = ('0' + now.getDate()).slice(-2);
+            const randomId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const typeValue = formData.get('complaint_type');
+
+            // Generate simple category prefix
+            let prefix = 'O'; // Other
+            if (typeValue === 'maintenance') prefix = 'E'; // Elec/Water
+            else if (typeValue === 'garbage') prefix = 'G'; // Garbage
+            else if (typeValue === 'road') prefix = 'R'; // Road
+            else if (typeValue === 'flood') prefix = 'F'; // Flood
+
+            // Find image base64 if selected
+            let imageBase64 = "";
+            const previewImg = document.getElementById('image_preview');
+            if(!previewImg.classList.contains('hidden')) {
+                imageBase64 = previewImg.src;
+            }
+
+            // Create Complaint Object
+            let fName = formData.get('fullname') || '-';
+            let prefixName = formData.get('prefix') || '';
+            let combinedFullname = prefixName ? `${prefixName}${fName}` : fName;
+
+            const newComplaint = {
+                ticket_number: `${prefix}-${dateStr}${monthStr}${yearStr}-${randomId}`,
+                type: typeValue,
+                subject: formData.get('subject') || '-',
+                fullname: combinedFullname,
+                age: formData.get('age') || '-',
+                house_number: formData.get('house_number') || '-',
+                village_or_road: formData.get('village_or_road') || '-',
+                subdistrict: formData.get('subdistrict') || '-',
+                phone: formData.get('phone') || '-',
+                latitude: formData.get('latitude'),
+                longitude: formData.get('longitude'),
+                resolved_address: formData.get('resolved_address') || '',
+                details: formData.get('details') || '-',
+                image: imageBase64,
+                status: 'pending',
+                date: now.toISOString()
+            };
+
+            // ========== API Integration ==========
+            // ส่งข้อมูลไปยัง API Service แทนการเซฟ LocalStorage แบบตรงๆ
+            const success = await API.submitComplaint(newComplaint);
+            
+            if (!success) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อกรุณาลองใหม่อีกครั้ง');
+                return;
+            }
+
+            // Save basic User Profile info 
+            const userProfile = {
+                fullname: combinedFullname,
+                phone: formData.get('phone') || '-'
+            };
+            await API.saveUserProfile(userProfile);
+
+            alert('ส่งคำร้องสำเร็จ!\nเลขที่ใบคำร้องของคุณคือ: ' + newComplaint.ticket_number + '\nเจ้าหน้าที่จะเร่งดำเนินการแก้ไขให้เร็วที่สุดครับ');
+            window.location.href = 'index.html'; // Redirect to home
+        }
+
+        // Auto Select Dropdown based on URL parameter
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const typeParam = urlParams.get('type');
+            if(typeParam) {
+                const selectElement = document.querySelector('select[name="complaint_type"]');
+                if (selectElement) {
+                    selectElement.value = typeParam;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

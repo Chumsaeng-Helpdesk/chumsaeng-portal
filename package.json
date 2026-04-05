@@ -1,0 +1,13 @@
+{
+  "name": "chumsaeng-municipality-api",
+  "version": "1.0.0",
+  "description": "Serverless APIs for Chumsaeng Portal using Supabase",
+  "scripts": {
+    "start": "node api/getComplaints.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.7",
+    "cors": "^2.8.5"
+  }
+}

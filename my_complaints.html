@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คำร้องของฉัน - เทศบาลเมืองชุมแสง</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="assets/js/api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#15803d',
+                            navy: '#1e3a8a',
+                            light: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans pb-24 h-screen overflow-y-auto">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-brand-navy to-blue-800 text-white p-4 sticky top-0 z-50 shadow-md">
+        <h1 class="text-xl font-bold text-center">คำร้องของฉัน</h1>
+    </header>
+
+    <main class="max-w-md mx-auto p-4">
+        
+        <div id="loading" class="text-center py-10 text-gray-500 hidden">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3 text-brand-green"></i>
+            <p>กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <div id="empty-state" class="text-center py-12 hidden">
+            <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-box-open text-4xl text-gray-400"></i>
+            </div>
+            <h2 class="text-lg font-bold text-gray-700">ยังไม่มีประวัติคำร้อง</h2>
+            <p class="text-sm text-gray-500 mt-2">คุณยังไม่ได้ทำการแจ้งเรื่องร้องเรียนใดๆ</p>
+            <a href="form.html" class="inline-block mt-4 bg-brand-green text-white px-6 py-2 rounded-full font-semibold shadow hover:bg-green-700 transition">สร้างคำร้องใหม่</a>
+        </div>
+
+        <!-- List Container -->
+        <div id="complaintsList" class="space-y-4">
+            <!-- Items injected via JS -->
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg px-2 py-2 flex justify-around items-center z-50 max-w-md left-1/2 transform -translate-x-1/2">
+        <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-home text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">หน้าแรก</span>
+        </a>
+        <a href="my_complaints.html" class="flex flex-col items-center text-brand-green w-1/5">
+            <i class="fas fa-list-alt text-2xl mb-1"></i>
+            <span class="text-[10px] font-bold">คำร้องของฉัน</span>
+        </a>
+        <div class="w-1/5 flex justify-center relative -top-6">
+            <a href="form.html" class="bg-brand-green text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:bg-green-600 transition">
+                <i class="fas fa-plus text-2xl"></i>
+            </a>
+        </div>
+        <a href="notifications.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5 relative">
+            <i class="fas fa-bell text-xl mb-1 mt-1"></i>
+            <span class="absolute top-0 right-3 bg-red-500 w-2 h-2 rounded-full"></span>
+            <span class="text-[10px]">แจ้งเตือน</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-user-circle text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <script>
+        const typeLabels = {
+            'maintenance': '<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">ไฟฟ้า/ประปา</span>',
+            'garbage': '<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">ปัญหาขยะ</span>',
+            'road': '<span class="px-2 py-1 rounded text-xs font-bold bg-orange-100 text-orange-800">ถนนชำรุด</span>',
+            'flood': '<span class="px-2 py-1 rounded text-xs font-bold bg-cyan-100 text-cyan-800">แจ้งน้ำท่วม</span>',
+            'other': '<span class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-800">เรื่องอื่นๆ</span>'
+        };
+
+        const statusUI = {
+            'pending': { color: 'text-red-500', icon: 'fa-clock', text: 'รอดำเนินการ' },
+            'in_progress': { color: 'text-yellow-500', icon: 'fa-tools', text: 'กำลังดำเนินการ' },
+            'resolved': { color: 'text-green-500', icon: 'fa-check-circle', text: 'เสร็จสิ้น' },
+            'rejected': { color: 'text-gray-500', icon: 'fa-times-circle', text: 'ปฏิเสธ/ยกเลิก' }
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const listEl = document.getElementById('complaintsList');
+            const emptyEl = document.getElementById('empty-state');
+            const loadingEl = document.getElementById('loading');
+            
+            loadingEl.classList.remove('hidden');
+            let complaints = await API.getComplaints();
+            loadingEl.classList.add('hidden');
+            
+            if (complaints.length === 0) {
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            let html = '';
+            complaints.forEach((c) => {
+                const dateObj = new Date(c.date);
+                const dateStr = dateObj.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric' });
+                const st = statusUI[c.status] || statusUI['pending'];
+                
+                html += `
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-brand-green relative">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-xs text-gray-400 font-semibold mb-1 block">เลขที่: ${c.ticket_number}</span>
+                            <h3 class="font-bold text-gray-800 text-sm truncate w-48">${c.subject || c.type}</h3>
+                        </div>
+                        <div class="text-right">
+                            ${typeLabels[c.type] || typeLabels['other']}
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs text-gray-600 mb-3 truncate">${c.details}</p>
+                    
+                    <div class="flex justify-between items-center border-t border-gray-100 pt-3 mt-2">
+                        <span class="text-xs text-gray-500"><i class="far fa-calendar-alt mr-1"></i> ${dateStr}</span>
+                        <span class="text-xs font-bold ${st.color}"><i class="fas ${st.icon} mr-1"></i> ${st.text}</span>
+                    </div>
+                </div>
+                `;
+            });
+            
+            listEl.innerHTML = html;
+        });
+    </script>
+</body>
+</html>

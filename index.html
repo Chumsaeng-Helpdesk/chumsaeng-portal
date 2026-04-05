@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคำร้องออนไลน์ เทศบาลเมืองชุมแสง</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#15803d', // สีเขียวเทศบาล
+                            navy: '#1e3a8a',  // สีน้ำเงินกรมท่า
+                            light: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-gray-100 pb-20 font-sans">
+    
+    <!-- Top Header -->
+    <header class="bg-white shadow relative">
+        <!-- สมมุติเป็นภาพ Background โลโก้ และข้อความ -->
+        <div class="h-56 bg-cover bg-center relative" style="background-image: url('assets/images/header-bg.jpg');">
+            <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-white px-4 text-center">
+                <img src="assets/images/logo.png" alt="โลโก้เทศบาลเมืองชุมแสง" class="w-20 h-20 bg-white rounded-full p-1 mb-2 shadow-lg object-contain">
+                <h1 class="text-xl font-bold tracking-wide" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5), 2px 2px 4px rgba(0,0,0,0.5);">ระบบคำร้องออนไลน์</h1>
+                <p class="text-sm font-semibold tracking-wide" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5), 1px 1px 3px rgba(0,0,0,0.5);">เทศบาลเมืองชุมแสง</p>
+                <!-- Line Login Button -->
+                <button id="lineLoginBtn" onclick="loginWithLine()" class="mt-3 bg-[#00B900] hover:bg-[#009900] text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center shadow cursor-pointer">
+                    <i class="fab fa-line text-lg mr-2"></i> เข้าสู่ระบบด้วย Line
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto px-4">
+        
+        <!-- Call to Action -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 text-center relative z-10 -mt-4 mb-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-2">แจ้งเรื่องร้องเรียน / ยื่นคำร้อง<br>ได้ง่ายผ่านมือถือ</h2>
+            <a href="form.html" class="inline-block w-full bg-gradient-to-r from-green-500 to-brand-green text-white font-bold text-xl py-4 rounded-full shadow-lg hover:shadow-xl transition flex justify-center items-center">
+                ยื่นคำร้องใหม่ <i class="fas fa-chevron-right ml-2 text-sm"></i>
+            </a>
+        </div>
+
+        <!-- Quick Services -->
+        <div class="mb-6">
+            <h3 class="text-brand-navy font-bold mb-3 border-l-4 border-brand-green pl-2">บริการด่วน</h3>
+            <div class="grid grid-cols-4 gap-3">
+                <a href="form.html?type=maintenance" class="bg-white rounded-xl p-3 shadow text-center flex flex-col items-center hover:bg-green-50">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-2">
+                        <i class="fas fa-lightbulb text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">แจ้งซ่อมไฟ</span>
+                </a>
+                <a href="form.html?type=garbage" class="bg-white rounded-xl p-3 shadow text-center flex flex-col items-center hover:bg-green-50">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2">
+                        <i class="fas fa-trash text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">ปัญหาขยะ</span>
+                </a>
+                <a href="form.html?type=road" class="bg-white rounded-xl p-3 shadow text-center flex flex-col items-center hover:bg-green-50">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 mb-2">
+                        <i class="fas fa-road text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">ถนนชำรุด</span>
+                </a>
+                <a href="form.html?type=flood" class="bg-white rounded-xl p-3 shadow text-center flex flex-col items-center hover:bg-green-50">
+                    <div class="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 mb-2">
+                        <i class="fas fa-water text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">แจ้งน้ำท่วม</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- News Section -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-brand-navy font-bold border-l-4 border-brand-green pl-2">ข่าวประชาสัมพันธ์</h3>
+                <a href="https://www.chumsaeng.org/news-obt?id=2" target="_blank" class="text-xs text-brand-green font-semibold hover:underline">ดูข่าวทั้งหมด <i class="fas fa-external-link-alt ml-1"></i></a>
+            </div>
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <a href="https://www.chumsaeng.org/news-obt?id=2" target="_blank" class="p-4 border-b border-gray-100 flex items-start hover:bg-gray-50 transition cursor-pointer">
+                    <div class="bg-orange-100 text-orange-600 p-2 rounded mr-3 mt-1">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm">อ่านข่าวประชาสัมพันธ์ล่าสุด</h4>
+                        <p class="text-xs text-gray-500 mt-1">คลิกที่นี่เพื่ออัปเดตประกาศและข่าวสารจากเว็บไซต์เทศบาลเมืองชุมแสงโดยตรง</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg px-2 py-2 flex justify-around items-center z-50 max-w-md left-1/2 transform -translate-x-1/2">
+        <a href="index.html" class="flex flex-col items-center text-brand-green w-1/5">
+            <i class="fas fa-home text-2xl mb-1"></i>
+            <span class="text-[10px] font-bold">หน้าแรก</span>
+        </a>
+        <a href="my_complaints.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-list-alt text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">คำร้องของฉัน</span>
+        </a>
+        <div class="w-1/5 flex justify-center relative -top-6">
+            <a href="form.html" class="bg-brand-green text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:bg-green-600 transition">
+                <i class="fas fa-plus text-2xl"></i>
+            </a>
+        </div>
+        <a href="notifications.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5 relative">
+            <i class="fas fa-bell text-xl mb-1 mt-1"></i>
+            <span class="absolute top-0 right-3 bg-red-500 w-2 h-2 rounded-full"></span>
+            <span class="text-[10px]">แจ้งเตือน</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
+            <i class="fas fa-user-circle text-xl mb-1 mt-1"></i>
+            <span class="text-[10px]">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <!-- LIFF Initialization Script -->
+    <script>
+        const LIFF_ID = "2009692692-648m8A9p";
+        
+        async function initLineLiff() {
+            try {
+                // เริ่มต้นการทำงานของ LIFF SDK
+                await liff.init({ liffId: LIFF_ID });
+                console.log("LIFF Initialized!");
+                
+                if (liff.isLoggedIn()) {
+                    // หากล็อกอินแล้ว ให้ดึงข้อมูลโปรไฟล์
+                    const profile = await liff.getProfile();
+                    
+                    // เปลี่ยนปุ่มล็อกอิน เป็นรูปภาพและชื่อของประชาชน
+                    const btn = document.getElementById('lineLoginBtn');
+                    btn.innerHTML = `<img src="${profile.pictureUrl}" class="w-6 h-6 rounded-full mr-2 shadow"> <span class="truncate max-w-[120px]">สวัสดี, ${profile.displayName}</span>`;
+                    btn.onclick = () => { location.href = 'profile.html'; }; // กดแล้วไปหน้า Profile
+                    
+                    // อัปเดตข้อมูลผู้ใช้ใน LocalStorage ให้ api.js เอาไปใช้ต่อ
+                    let currentProfile = JSON.parse(localStorage.getItem('chumsaeng_user_profile')) || {};
+                    currentProfile.fullname = profile.displayName;
+                    currentProfile.lineUserId = profile.userId;
+                    currentProfile.pictureUrl = profile.pictureUrl;
+                    localStorage.setItem('chumsaeng_user_profile', JSON.stringify(currentProfile));
+                }
+            } catch (err) {
+                console.error("LIFF Initialization failed", err);
+            }
+        }
+
+        // ฟังก์ชันสั่งล็อกอินเมื่อคลิกปุ่ม
+        function loginWithLine() {
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+        }
+
+        // เรียกใช้ฟังก์ชันตอนโหลดหน้าเว็บ
+        document.addEventListener("DOMContentLoaded", () => {
+            initLineLiff();
+        });
+    </script>
+</body>
+</html>
