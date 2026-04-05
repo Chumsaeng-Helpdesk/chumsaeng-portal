@@ -46,6 +46,13 @@ CREATE TABLE IF NOT EXISTS complaints (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ตารางตั้งค่าระบบส่วนกลาง (สำหรับแก้ไขผ่านปุ่มหน้าเว็บโดยไม่ต้องแก้ Vercel ENV)
+CREATE TABLE IF NOT EXISTS system_settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- เพิ่มอธิบายตารางบางส่วน (Postgres syntax)
 COMMENT ON COLUMN complaints.ticket_number IS 'รหัสตั๋วคำร้อง เช่น R-20260315-001';
 COMMENT ON COLUMN complaints.status IS 'สถานะ: รอดำเนินการ, กำลังทำ, เสร็จสิ้น, ปฏิเสธ/ยกเลิก';

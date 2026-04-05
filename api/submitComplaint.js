@@ -66,8 +66,15 @@ export default async function handler(req, res) {
         if (error) throw new Error(error.message);
 
         // 3. ยิงแจ้งเตือนผ่าน LINE Messaging API เข้ากลุ่มหรือบุคคล
-        const lineToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-        const lineTarget = process.env.LINE_TARGET_ID;
+        // ดึงค่าการตั้งค่าจากตาราง system_settings (เพื่อให้แก้ผ่านหน้าเว็บได้)
+        const { data: settingsData } = await supabase.from('system_settings').select('*');
+        const settings = {};
+        if (settingsData) {
+            settingsData.forEach(item => settings[item.setting_key] = item.setting_value);
+        }
+
+        const lineToken = settings['LINE_CHANNEL_ACCESS_TOKEN'] || process.env.LINE_CHANNEL_ACCESS_TOKEN;
+        const lineTarget = settings['LINE_TARGET_ID'] || process.env.LINE_TARGET_ID;
 
         if (lineToken && lineTarget) {
             const typeLabels = {
