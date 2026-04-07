@@ -467,6 +467,9 @@
                 phone: formData.get('phone') || '-'
             };
             await API.saveUserProfile(userProfile);
+            
+            // รีเซ็ตการแจ้งเตือน เพื่อให้จุดแดงกลับมาแจ้งเตือน
+            localStorage.setItem('has_seen_notifications', 'false');
 
             alert('ส่งคำร้องสำเร็จ!\nเลขที่ใบคำร้องของคุณคือ: ' + newComplaint.ticket_number + '\nเจ้าหน้าที่จะเร่งดำเนินการแก้ไขให้เร็วที่สุดครับ');
             window.location.href = 'index.html'; // Redirect to home

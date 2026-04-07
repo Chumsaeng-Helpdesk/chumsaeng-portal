@@ -133,7 +133,12 @@
         </div>
         <a href="notifications.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5 relative">
             <i class="fas fa-bell text-xl mb-1 mt-1"></i>
-            <span class="absolute top-0 right-3 bg-red-500 w-2 h-2 rounded-full"></span>
+            <span id="notification-dot" class="absolute top-0 right-3 bg-red-500 w-2 h-2 rounded-full"></span>
+            <script>
+                if (localStorage.getItem('has_seen_notifications') === 'true') {
+                    document.getElementById('notification-dot').style.display = 'none';
+                }
+            </script>
             <span class="text-[10px]">แจ้งเตือน</span>
         </a>
         <a href="profile.html" class="flex flex-col items-center text-brand-green w-1/5">
