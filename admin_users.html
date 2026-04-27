@@ -79,7 +79,7 @@
         <!-- Logo Area -->
         <div class="h-16 flex items-center px-6 border-b border-gray-700">
             <img src="assets/images/logo.png" alt="Logo" class="w-8 h-8 bg-white rounded-full p-0.5 mr-3">
-            <span class="text-lg font-bold tracking-wider">แอดมินชุมแสง</span>
+            <span class="text-xs font-bold leading-tight">ระบบรับแจ้งเรื่องร้องทุกข์<br>งานเทศบาลเมืองชุมแสง</span>
         </div>
         
         <!-- Navigation Links -->
@@ -243,6 +243,46 @@
 
             menuBtn.addEventListener('click', toggleSidebar);
             overlay.addEventListener('click', toggleSidebar);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const role = sessionStorage.getItem('user_role') || 'admin';
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl) {
+                sidebarEl.classList.remove('bg-brand-dark');
+                sidebarEl.className = sidebarEl.className.replace(/\bbg-\w+-\d+\b/g, '').trim();
+                const colors = {
+                    'admin': 'bg-slate-950',
+                    'director': 'bg-orange-950',
+                    'clerk': 'bg-purple-950',
+                    'mayor': 'bg-blue-950',
+                    'staff': 'bg-emerald-950'
+                };
+                sidebarEl.classList.add(colors[role] || 'bg-slate-950');
+            }
+            
+            const title = sessionStorage.getItem('user_title') || 'ผู้ดูแลระบบ';
+            const roleEl = document.getElementById('sidebarProfileRole');
+            const titleEl = document.getElementById('sidebarProfileTitle');
+            const iconEl = document.getElementById('sidebarProfileIcon');
+            const welcomeEl = document.getElementById('topbarWelcome');
+            
+            if(roleEl) roleEl.textContent = role.toUpperCase();
+            if(titleEl) titleEl.textContent = title;
+            if(iconEl) {
+                iconEl.textContent = role.substring(0, 2).toUpperCase();
+                iconEl.className = iconEl.className.replace(/\bbg-\w+-\d+\b/g, '').trim();
+                const iconColors = {
+                    'admin': 'bg-slate-600',
+                    'director': 'bg-orange-600',
+                    'clerk': 'bg-purple-600',
+                    'mayor': 'bg-blue-600',
+                    'staff': 'bg-emerald-600'
+                };
+                iconEl.classList.add(iconColors[role] || 'bg-slate-600');
+            }
+            if(welcomeEl) welcomeEl.textContent = 'สวัสดี, ' + title;
         });
     </script>
 </body>

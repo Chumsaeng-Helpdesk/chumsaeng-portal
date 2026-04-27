@@ -79,7 +79,7 @@
         <!-- Logo Area -->
         <div class="h-16 flex items-center px-6 border-b border-gray-700">
             <img src="assets/images/logo.png" alt="Logo" class="w-8 h-8 bg-white rounded-full p-0.5 mr-3">
-            <span class="text-lg font-bold tracking-wider">แอดมินชุมแสง</span>
+            <span class="text-xs font-bold leading-tight">ระบบรับแจ้งเรื่องร้องทุกข์<br>งานเทศบาลเมืองชุมแสง</span>
         </div>
         
         <!-- Navigation Links -->
@@ -111,10 +111,10 @@
         <!-- User Profile Bottom -->
         <div class="border-t border-gray-700 p-4">
             <div onclick="logout()" class="flex items-center cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition">
-                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm">AD</div>
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm" id="sidebarProfileIcon">AD</div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium text-white">Admin</p>
-                    <p class="text-xs text-gray-400 text-truncate">ผู้ดูแลระบบ</p>
+                    <p class="text-sm font-medium text-white" id="sidebarProfileRole">Admin</p>
+                    <p class="text-xs text-gray-400 text-truncate" id="sidebarProfileTitle">ผู้ดูแลระบบ</p>
                 </div>
                 <i class="fas fa-sign-out-alt ml-auto text-gray-400 hover:text-red-400"></i>
             </div>
@@ -148,7 +148,7 @@
                     </span>
                 </button>
                 <div class="border-l pl-4 border-gray-200 flex items-center">
-                    <span class="text-sm font-medium text-gray-700 mr-2 hidden sm:block">สวัสดี, Admin</span>
+                    <span class="text-sm font-medium text-gray-700 mr-2 hidden sm:block" id="topbarWelcome">สวัสดี, Admin</span>
                     <div class="w-8 h-8 rounded-full bg-brand-green text-white flex items-center justify-center cursor-pointer shadow-sm">
                         <i class="fas fa-user"></i>
                     </div>
@@ -329,9 +329,8 @@
                     </div>
                 </div>
 
-                <div class="flex space-x-2 pt-2 border-t border-gray-200 mt-4">
-                    <button class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('in_progress')">รับเรื่อง/ดำเนินการ</button>
-                    <button class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('resolved')">แก้ไขเสร็จสิ้น</button>
+                <div class="flex space-x-2 pt-2 border-t border-gray-200 mt-4" id="modalActionButtons">
+                    <!-- Buttons injected via JS -->
                 </div>
             </div>
         </div>
@@ -357,17 +356,44 @@
         };
 
         const statusLabels = {
-            'pending': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><span class="w-2 h-2 mr-1.5 bg-red-500 rounded-full"></span> รอดำเนินการ</span>',
+            'pending': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><span class="w-2 h-2 mr-1.5 bg-red-500 rounded-full"></span> รอรับเรื่องเข้าระบบ</span>',
+            'pending_admin': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><span class="w-2 h-2 mr-1.5 bg-red-500 rounded-full"></span> รอรับเรื่องเข้าระบบ</span>',
+            'pending_director': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"><span class="w-2 h-2 mr-1.5 bg-orange-500 rounded-full"></span> รอ ผอ.กอง อนุมัติ</span>',
+            'pending_clerk': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"><span class="w-2 h-2 mr-1.5 bg-purple-500 rounded-full"></span> รอปลัดเทศบาล อนุมัติ</span>',
+            'pending_mayor': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><span class="w-2 h-2 mr-1.5 bg-blue-500 rounded-full"></span> รอนายกเทศมนตรี อนุมัติ</span>',
+            'assigned': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"><span class="w-2 h-2 mr-1.5 bg-indigo-500 rounded-full"></span> มอบหมายงานแล้ว</span>',
             'in_progress': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><span class="w-2 h-2 mr-1.5 bg-yellow-500 rounded-full"></span> กำลังดำเนินการ</span>',
             'resolved': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><span class="w-2 h-2 mr-1.5 bg-green-500 rounded-full"></span> เสร็จสิ้น</span>',
             'rejected': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">ปฏิเสธ</span>'
         };
 
+        const userRole = sessionStorage.getItem('user_role') || 'admin';
+        const userTitle = sessionStorage.getItem('user_title') || 'ผู้ดูแลระบบ';
+
         let currentActiveIndex = null;
         let globalComplaints = [];
 
         async function loadDashboardData() {
-            let complaints = await API.getComplaints();
+            // Update UI with User Info
+            $('#sidebarProfileRole').text(userRole.toUpperCase());
+            $('#sidebarProfileTitle').text(userTitle);
+            $('#sidebarProfileIcon').text(userRole.substring(0, 2).toUpperCase());
+            $('#topbarWelcome').text('สวัสดี, ' + userTitle);
+
+            let allComplaints = await API.getComplaints();
+            
+            // Filter complaints based on Role
+            const roleStatusMap = {
+                'admin': ['pending_admin', 'pending', 'pending_director', 'pending_clerk', 'pending_mayor', 'assigned', 'in_progress', 'resolved', 'rejected'],
+                'director': ['pending_director', 'pending_clerk', 'pending_mayor', 'assigned', 'in_progress', 'resolved', 'rejected'],
+                'clerk': ['pending_clerk', 'pending_mayor', 'assigned', 'in_progress', 'resolved', 'rejected'],
+                'mayor': ['pending_mayor', 'assigned', 'in_progress', 'resolved', 'rejected'],
+                'staff': ['assigned', 'in_progress', 'resolved', 'rejected']
+            };
+            
+            let visibleStatuses = roleStatusMap[userRole] || roleStatusMap['admin'];
+            let complaints = allComplaints.filter(c => visibleStatuses.includes(c.status || 'pending_admin'));
+
             globalComplaints = complaints;
             
             // Add dummy data if empty so the UI doesn't look broken
@@ -381,17 +407,31 @@
 
             // Update Cards
             $('#stat_total').text(complaints.length);
-            $('#stat_pending').text(complaints.filter(c => c.status === 'pending').length);
-            $('#stat_in_progress').text(complaints.filter(c => c.status === 'in_progress').length);
+            $('#stat_pending').text(complaints.filter(c => ['pending_admin', 'pending', 'pending_director', 'pending_clerk', 'pending_mayor'].includes(c.status || 'pending_admin')).length);
+            $('#stat_in_progress').text(complaints.filter(c => ['assigned', 'in_progress'].includes(c.status)).length);
             $('#stat_resolved').text(complaints.filter(c => c.status === 'resolved').length);
 
-            // Populate Table
+            const actionButtonColors = {
+                'pending': 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 border border-red-200',
+                'pending_admin': 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 border border-red-200',
+                'pending_director': 'text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 border border-orange-200',
+                'pending_clerk': 'text-purple-600 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200',
+                'pending_mayor': 'text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200',
+                'assigned': 'text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200',
+                'in_progress': 'text-yellow-600 hover:text-yellow-900 bg-yellow-50 hover:bg-yellow-100 border border-yellow-200',
+                'resolved': 'text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 border border-green-200',
+                'rejected': 'text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200'
+            };
+
             let rows = '';
             complaints.forEach((c, index) => {
                 const dateObj = new Date(c.date);
                 const dateStr = dateObj.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric' });
                 const timeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
                 
+                const s = c.status || 'pending_admin';
+                const btnColor = actionButtonColors[s] || actionButtonColors['pending_admin'];
+
                 rows += `
                 <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                     <td class="py-3 px-4 font-medium text-brand-navy">${c.ticket_number}</td>
@@ -399,9 +439,9 @@
                     <td class="py-3 px-4 text-gray-600 truncate max-w-xs"><strong>${c.subject || '-'}</strong><br>${c.details || '-'}</td>
                     <td class="py-3 px-4 text-gray-800">${c.fullname}</td>
                     <td class="py-3 px-4 text-gray-500 whitespace-nowrap">${dateStr} <br><span class="text-xs">${timeStr}</span></td>
-                    <td class="py-3 px-4">${statusLabels[c.status]}</td>
+                    <td class="py-3 px-4">${statusLabels[s] || statusLabels['pending_admin']}</td>
                     <td class="py-3 px-4 text-right">
-                        <button onclick="openModal(${index})" class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition whitespace-nowrap">ดูรายละเอียด</button>
+                        <button onclick="openModal(${index})" class="${btnColor} px-3 py-1.5 rounded-lg transition font-medium whitespace-nowrap shadow-sm">จัดการสถานะ <i class="fas fa-chevron-right ml-1 text-xs"></i></button>
                     </td>
                 </tr>`;
             });
@@ -431,7 +471,7 @@
             $('#modalTicketNum').text(c.ticket_number);
             $('#modalType').html(typeLabels[c.type] || typeLabels['other']);
             $('#modalSubject').text(c.subject || '-');
-            $('#modalStatus').html(statusLabels[c.status]);
+            $('#modalStatus').html(statusLabels[c.status || 'pending_admin'] || statusLabels['pending_admin']);
             $('#modalName').text(c.fullname);
             $('#modalAge').text(c.age || '-');
             
@@ -496,6 +536,36 @@
             } else {
                 $('#adminResolutionSection').hide();
             }
+
+            // --- Dynamic Buttons based on Role & Status ---
+            let buttonsHtml = '';
+            let s = c.status || 'pending_admin';
+            
+            if (userRole === 'admin' && (s === 'pending_admin' || s === 'pending')) {
+                buttonsHtml += `<button class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('pending_director')">รับเรื่องและส่งต่อผู้อำนวยการกอง</button>`;
+            } 
+            else if (userRole === 'director' && s === 'pending_director') {
+                buttonsHtml += `<button class="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('pending_clerk')">เสนอปลัดเทศบาล</button>`;
+            }
+            else if (userRole === 'clerk' && s === 'pending_clerk') {
+                buttonsHtml += `<button class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('pending_mayor')">เสนอนายกเทศมนตรี</button>`;
+            }
+            else if (userRole === 'mayor' && s === 'pending_mayor') {
+                buttonsHtml += `<button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('assigned')">สั่งการ / มอบหมายงานให้ช่าง</button>`;
+            }
+            else if (userRole === 'staff') {
+                if (s === 'assigned') {
+                    buttonsHtml += `<button class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('in_progress')">รับเรื่อง/ดำเนินการ</button>`;
+                } else if (s === 'in_progress') {
+                    buttonsHtml += `<button class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('resolved')">แก้ไขเสร็จสิ้น</button>`;
+                }
+            }
+
+            if (buttonsHtml === '') {
+                buttonsHtml = `<p class="text-sm text-gray-500 w-full text-center">ไม่มีการดำเนินการที่ทำได้ในขณะนี้</p>`;
+            }
+            
+            $('#modalActionButtons').html(buttonsHtml);
 
             $('#ticketModal').removeClass('hidden');
         }
@@ -567,6 +637,46 @@
 
             menuBtn.addEventListener('click', toggleSidebar);
             overlay.addEventListener('click', toggleSidebar);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const role = sessionStorage.getItem('user_role') || 'admin';
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl) {
+                sidebarEl.classList.remove('bg-brand-dark');
+                sidebarEl.className = sidebarEl.className.replace(/\bbg-\w+-\d+\b/g, '').trim();
+                const colors = {
+                    'admin': 'bg-slate-950',
+                    'director': 'bg-orange-950',
+                    'clerk': 'bg-purple-950',
+                    'mayor': 'bg-blue-950',
+                    'staff': 'bg-emerald-950'
+                };
+                sidebarEl.classList.add(colors[role] || 'bg-slate-950');
+            }
+            
+            const title = sessionStorage.getItem('user_title') || 'ผู้ดูแลระบบ';
+            const roleEl = document.getElementById('sidebarProfileRole');
+            const titleEl = document.getElementById('sidebarProfileTitle');
+            const iconEl = document.getElementById('sidebarProfileIcon');
+            const welcomeEl = document.getElementById('topbarWelcome');
+            
+            if(roleEl) roleEl.textContent = role.toUpperCase();
+            if(titleEl) titleEl.textContent = title;
+            if(iconEl) {
+                iconEl.textContent = role.substring(0, 2).toUpperCase();
+                iconEl.className = iconEl.className.replace(/\bbg-\w+-\d+\b/g, '').trim();
+                const iconColors = {
+                    'admin': 'bg-slate-600',
+                    'director': 'bg-orange-600',
+                    'clerk': 'bg-purple-600',
+                    'mayor': 'bg-blue-600',
+                    'staff': 'bg-emerald-600'
+                };
+                iconEl.classList.add(iconColors[role] || 'bg-slate-600');
+            }
+            if(welcomeEl) welcomeEl.textContent = 'สวัสดี, ' + title;
         });
     </script>
 </body>

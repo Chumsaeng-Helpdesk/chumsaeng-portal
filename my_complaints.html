@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,6 +25,7 @@
         }
     </script>
 </head>
+
 <body class="bg-gray-100 font-sans pb-24 h-screen overflow-y-auto">
 
     <!-- Header -->
@@ -32,7 +34,7 @@
     </header>
 
     <main class="max-w-md mx-auto p-4">
-        
+
         <div id="loading" class="text-center py-10 text-gray-500 hidden">
             <i class="fas fa-spinner fa-spin text-3xl mb-3 text-brand-green"></i>
             <p>กำลังโหลดข้อมูล...</p>
@@ -44,7 +46,8 @@
             </div>
             <h2 class="text-lg font-bold text-gray-700">ยังไม่มีประวัติคำร้อง</h2>
             <p class="text-sm text-gray-500 mt-2">คุณยังไม่ได้ทำการแจ้งเรื่องร้องเรียนใดๆ</p>
-            <a href="form.html" class="inline-block mt-4 bg-brand-green text-white px-6 py-2 rounded-full font-semibold shadow hover:bg-green-700 transition">สร้างคำร้องใหม่</a>
+            <a href="form.html"
+                class="inline-block mt-4 bg-brand-green text-white px-6 py-2 rounded-full font-semibold shadow hover:bg-green-700 transition">สร้างคำร้องใหม่</a>
         </div>
 
         <!-- List Container -->
@@ -52,10 +55,39 @@
             <!-- Items injected via JS -->
         </div>
 
+        <!-- Stepper Modal -->
+        <div id="statusModal"
+            class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-screen overflow-y-auto">
+                <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center"><i
+                            class="fas fa-route mr-2 text-brand-green"></i> ติดตามสถานะ</h3>
+                    <button onclick="closeStatusModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none"><i
+                            class="fas fa-times text-xl"></i></button>
+                </div>
+                <div class="p-5">
+                    <div class="mb-4">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">เลขที่อ้างอิง</p>
+                        <p class="font-bold text-brand-navy text-lg" id="stepperTicketNum"></p>
+                    </div>
+
+                    <!-- Vertical Stepper -->
+                    <div class="relative px-2 py-2" id="stepperContainer">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                <div class="p-4 border-t border-gray-200">
+                    <button onclick="closeStatusModal()"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 rounded-lg transition">ปิด</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg px-2 py-2 flex justify-around items-center z-50 max-w-md left-1/2 transform -translate-x-1/2">
+    <nav
+        class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg px-2 py-2 flex justify-around items-center z-50 max-w-md left-1/2 transform -translate-x-1/2">
         <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5">
             <i class="fas fa-home text-xl mb-1 mt-1"></i>
             <span class="text-[10px]">หน้าแรก</span>
@@ -65,11 +97,13 @@
             <span class="text-[10px] font-bold">คำร้องของฉัน</span>
         </a>
         <div class="w-1/5 flex justify-center relative -top-6">
-            <a href="form.html" class="bg-brand-green text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:bg-green-600 transition">
+            <a href="form.html"
+                class="bg-brand-green text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:bg-green-600 transition">
                 <i class="fas fa-plus text-2xl"></i>
             </a>
         </div>
-        <a href="notifications.html" class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5 relative">
+        <a href="notifications.html"
+            class="flex flex-col items-center text-gray-400 hover:text-brand-green w-1/5 relative">
             <i class="fas fa-bell text-xl mb-1 mt-1"></i>
             <span id="notification-dot" class="absolute top-0 right-3 bg-red-500 w-2 h-2 rounded-full"></span>
             <script>
@@ -95,34 +129,122 @@
         };
 
         const statusUI = {
-            'pending': { color: 'text-red-500', icon: 'fa-clock', text: 'รอดำเนินการ' },
+            'pending': { color: 'text-red-500', icon: 'fa-clock', text: 'รอรับเรื่องเข้าระบบ' },
+            'pending_admin': { color: 'text-red-500', icon: 'fa-clock', text: 'รอรับเรื่องเข้าระบบ' },
+            'pending_director': { color: 'text-orange-500', icon: 'fa-file-signature', text: 'รอเสนอ (ผอ.กอง)' },
+            'pending_clerk': { color: 'text-purple-500', icon: 'fa-user-tie', text: 'รอเสนอ (ปลัด)' },
+            'pending_mayor': { color: 'text-blue-500', icon: 'fa-gavel', text: 'รอสั่งการ (นายกฯ)' },
+            'assigned': { color: 'text-indigo-500', icon: 'fa-hard-hat', text: 'มอบหมายงานแล้ว' },
             'in_progress': { color: 'text-yellow-500', icon: 'fa-tools', text: 'กำลังดำเนินการ' },
             'resolved': { color: 'text-green-500', icon: 'fa-check-circle', text: 'เสร็จสิ้น' },
             'rejected': { color: 'text-gray-500', icon: 'fa-times-circle', text: 'ปฏิเสธ/ยกเลิก' }
         };
 
+        let globalUserComplaints = [];
+
+        function openStatusModal(index) {
+            const c = globalUserComplaints[index];
+            document.getElementById('stepperTicketNum').textContent = c.ticket_number;
+
+            const steps = [
+                { id: 'pending_admin', label: 'รับเรื่องเข้าระบบ' },
+                { id: 'pending_director', label: 'ผู้อำนวยการกอง อนุมัติ' },
+                { id: 'pending_clerk', label: 'ปลัดเทศบาล อนุมัติ' },
+                { id: 'pending_mayor', label: 'นายกเทศมนตรี อนุมัติ' },
+                { id: 'assigned', label: 'สั่งการ / มอบหมายงาน' },
+                { id: 'in_progress', label: 'กำลังดำเนินการ' },
+                { id: 'resolved', label: 'แก้ไขเสร็จสิ้น' }
+            ];
+
+            // Map current status to step index
+            let currentStepIdx = 0;
+            const s = c.status || 'pending_admin';
+
+            if (s === 'rejected') {
+                currentStepIdx = -1; // Special case
+            } else if (s === 'resolved') currentStepIdx = 6;
+            else if (s === 'in_progress') currentStepIdx = 5;
+            else if (s === 'assigned') currentStepIdx = 4;
+            else if (s === 'pending_mayor') currentStepIdx = 3;
+            else if (s === 'pending_clerk') currentStepIdx = 2;
+            else if (s === 'pending_director') currentStepIdx = 1;
+            else currentStepIdx = 0; // pending_admin or pending
+
+            let stepperHtml = '';
+
+            if (s === 'rejected') {
+                stepperHtml = `
+                    <div class="relative flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center shrink-0 shadow-md">
+                            <i class="fas fa-times text-white text-sm"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-sm font-bold text-red-600">คำร้องถูกปฏิเสธ/ยกเลิก</h4>
+                            <p class="text-xs text-gray-500">ไม่สามารถดำเนินการต่อได้</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                stepperHtml += `
+                    <!-- The vertical line -->
+                    <div class="absolute top-[28px] bottom-[28px] left-[22px] w-1 bg-brand-navy"></div>
+                    <div class="space-y-8">
+                `;
+
+                steps.forEach((step, idx) => {
+                    let isCompleted = idx <= currentStepIdx;
+
+                    let dotColor = isCompleted ? 'bg-brand-navy' : 'bg-white border-2 border-brand-navy';
+                    let iconHtml = isCompleted ? '<i class="fas fa-check text-white text-sm"></i>' : '';
+                    let textColor = isCompleted ? 'text-gray-800 font-medium' : 'text-gray-500';
+
+                    stepperHtml += `
+                        <div class="relative flex items-center z-10">
+                            <div class="w-8 h-8 rounded-full ${dotColor} flex items-center justify-center shadow-sm shrink-0 transition-all duration-300">
+                                ${iconHtml}
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-base ${textColor}">${step.label}</h4>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                stepperHtml += `</div>`;
+            }
+
+            document.getElementById('stepperContainer').innerHTML = stepperHtml;
+            document.getElementById('statusModal').classList.remove('hidden');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.add('hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const listEl = document.getElementById('complaintsList');
             const emptyEl = document.getElementById('empty-state');
             const loadingEl = document.getElementById('loading');
-            
+
             loadingEl.classList.remove('hidden');
             let complaints = await API.getComplaints();
             loadingEl.classList.add('hidden');
-            
+
             if (complaints.length === 0) {
                 emptyEl.classList.remove('hidden');
                 return;
             }
 
+            globalUserComplaints = complaints;
+
             let html = '';
-            complaints.forEach((c) => {
+            complaints.forEach((c, index) => {
                 const dateObj = new Date(c.date);
                 const dateStr = dateObj.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric' });
-                const st = statusUI[c.status] || statusUI['pending'];
-                
+                const st = statusUI[c.status || 'pending_admin'] || statusUI['pending_admin'];
+
                 html += `
-                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-brand-green relative">
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-brand-green relative cursor-pointer hover:bg-gray-50 transition" onclick="openStatusModal(${index})">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <span class="text-xs text-gray-400 font-semibold mb-1 block">เลขที่: ${c.ticket_number}</span>
@@ -137,14 +259,18 @@
                     
                     <div class="flex justify-between items-center border-t border-gray-100 pt-3 mt-2">
                         <span class="text-xs text-gray-500"><i class="far fa-calendar-alt mr-1"></i> ${dateStr}</span>
-                        <span class="text-xs font-bold ${st.color}"><i class="fas ${st.icon} mr-1"></i> ${st.text}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold ${st.color}"><i class="fas ${st.icon} mr-1"></i> ${st.text}</span>
+                            <i class="fas fa-chevron-right text-gray-300 text-xs ml-2"></i>
+                        </div>
                     </div>
                 </div>
                 `;
             });
-            
+
             listEl.innerHTML = html;
         });
     </script>
 </body>
+
 </html>
