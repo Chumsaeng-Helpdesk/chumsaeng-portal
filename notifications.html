@@ -69,6 +69,19 @@
 
             let html = '';
 
+            const escapeHTML = (str) => {
+                if (!str) return '';
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        "'": '&#39;',
+                        '"': '&quot;'
+                    }[tag] || tag)
+                );
+            };
+
             if (complaints.length > 0) {
                 complaints.forEach((c) => {
                     const dateObj = new Date(c.date);
@@ -83,23 +96,26 @@
                     let desc = '';
                     let readClass = '';
 
+                    const safeTicket = escapeHTML(c.ticket_number);
+                    const safeSubject = escapeHTML(c.subject || c.type);
+
                     if (c.status === 'resolved') {
                         icon = '<i class="fas fa-check"></i>';
                         bgColor = 'bg-brand-green';
                         title = 'คำร้องของคุณได้รับการแก้ไขแล้ว';
-                        desc = `คำร้องเลขที่ ${c.ticket_number} (${c.subject || c.type}) เจ้าหน้าที่ดำเนินการเสร็จสมบูรณ์แล้วครับ สนใจดูรายละเอียดเพิ่มเติมคลิก`;
+                        desc = `คำร้องเลขที่ ${safeTicket} (${safeSubject}) เจ้าหน้าที่ดำเนินการเสร็จสมบูรณ์แล้วครับ สนใจดูรายละเอียดเพิ่มเติมคลิก`;
                         readClass = 'bg-green-50 hover:bg-green-100';
                     } else if (c.status === 'in_progress') {
                         icon = '<i class="fas fa-tools"></i>';
                         bgColor = 'bg-yellow-400';
                         title = 'เจ้าหน้าที่รับเรื่องและกำลังดำเนินการ';
-                        desc = `คำร้องเลขที่ ${c.ticket_number} ขณะนี้อยู่ในระหว่างการแก้ไขโดยเจ้าหน้าที่`;
+                        desc = `คำร้องเลขที่ ${safeTicket} ขณะนี้อยู่ในระหว่างการแก้ไขโดยเจ้าหน้าที่`;
                         readClass = 'hover:bg-gray-50';
                     } else {
                         icon = '<i class="fas fa-paper-plane"></i>';
                         bgColor = 'bg-blue-400';
                         title = 'ระบบได้รับคำร้องของคุณแล้ว';
-                        desc = `คำร้องเลขที่ ${c.ticket_number} ถูกส่งเข้าระบบรอเจ้าหน้าที่ตรวจสอบเรียบร้อยแล้วครับ`;
+                        desc = `คำร้องเลขที่ ${safeTicket} ถูกส่งเข้าระบบรอเจ้าหน้าที่ตรวจสอบเรียบร้อยแล้วครับ`;
                         readClass = 'hover:bg-gray-50 opacity-75';
                     }
 
