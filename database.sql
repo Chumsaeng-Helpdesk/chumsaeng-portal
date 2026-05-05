@@ -26,9 +26,10 @@ CREATE TABLE IF NOT EXISTS complaints (
     
     -- ไฟล์รูปภาพที่ผู้แจ้งแนบมา (ใช้ TEXT แทน LONGTEXT สำหรับ Postgres)
     image_path TEXT NULL,
+    id_card_image TEXT NULL,
     
     -- สถานะการดำเนินงาน
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'resolved', 'rejected')),
+    status VARCHAR(50) DEFAULT 'pending_admin' CHECK (status IN ('pending_admin', 'pending_director', 'pending_clerk', 'pending_mayor', 'assigned', 'in_progress', 'resolved', 'rejected')),
     
     -- ข้อมูลจากเจ้าหน้าที่ปฏิบัติงาน (Field Worker Data)
     assigned_to INT NULL,
@@ -63,7 +64,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     fullname VARCHAR(150) NOT NULL,
-    role VARCHAR(50) DEFAULT 'staff' CHECK (role IN ('admin', 'staff')),
+    role VARCHAR(50) DEFAULT 'staff' CHECK (role IN ('admin', 'director', 'clerk', 'mayor', 'staff')),
     department VARCHAR(100) NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
