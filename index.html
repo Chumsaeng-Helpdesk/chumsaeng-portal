@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ระบบรับเรื่องร้องเรียนออนไลน์ เทศบาลเมืองชุมแสง อำเภอชุมแสง จังหวัดนครสวรรค์ แจ้งปัญหา สาธารณูปโภค ถนน ขยะ น้ำท่วม">
+    <meta name="theme-color" content="#15803d">
     <title>ระบบคำร้องออนไลน์ เทศบาลเมืองชุมแสง</title>
     <link rel="icon" type="image/png" href="assets/images/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,16 +32,28 @@
     <!-- Top Header -->
     <header class="bg-white shadow relative">
         <!-- สมมุติเป็นภาพ Background โลโก้ และข้อความ -->
-        <div class="h-56 bg-cover bg-center relative" style="background-image: url('assets/images/header-bg.jpg');">
+        <div class="h-72 bg-cover bg-center relative" style="background-image: url('assets/images/header-bg.jpg');">
             <div class="absolute inset-0 bg-black bg-opacity-40"></div>
             <div class="absolute inset-0 flex flex-col justify-center items-center text-white px-4 text-center">
                 <img src="assets/images/logo.png" alt="โลโก้เทศบาลเมืองชุมแสง" class="w-20 h-20 bg-white rounded-full p-1 mb-2 shadow-lg object-contain">
                 <h1 class="text-xl font-bold tracking-wide" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5), 2px 2px 4px rgba(0,0,0,0.5);">ระบบคำร้องออนไลน์</h1>
                 <p class="text-sm font-semibold tracking-wide" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5), 1px 1px 3px rgba(0,0,0,0.5);">เทศบาลเมืองชุมแสง</p>
-                <!-- Line Login Button -->
-                <button id="lineLoginBtn" onclick="loginWithLine()" class="mt-3 bg-[#00B900] hover:bg-[#009900] text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center shadow cursor-pointer">
-                    <i class="fab fa-line text-lg mr-2"></i> เข้าสู่ระบบด้วย Line
-                </button>
+                <!-- Line Login Section -->
+                <div class="mt-3 flex flex-col items-center">
+                    <button id="lineLoginBtn" onclick="loginWithLine()" class="bg-[#00B900] hover:bg-[#009900] text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center shadow-lg cursor-pointer transition transform hover:scale-105">
+                        <i class="fab fa-line text-xl mr-2"></i> เข้าสู่ระบบด้วย Line
+                    </button>
+                    <div id="loginBenefits" class="mt-3 bg-black bg-opacity-40 backdrop-blur-sm border border-white border-opacity-20 px-4 py-2.5 rounded-2xl shadow-lg flex flex-col items-center">
+                        <p class="text-xs font-bold text-green-400 mb-1.5" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                            เข้าสู่ระบบเพื่อรับสิทธิประโยชน์
+                        </p>
+                        <p class="text-[11px] sm:text-xs font-medium text-white flex items-center justify-center space-x-2 sm:space-x-3" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                            <span class="flex items-center"><i class="fas fa-bell text-yellow-400 mr-1"></i> แจ้งเตือนสถานะ</span>
+                            <span class="text-gray-400 text-[10px]">|</span>
+                            <span class="flex items-center"><i class="fas fa-history text-blue-300 mr-1"></i> ดูประวัติย้อนหลัง</span>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -146,7 +160,7 @@
             try {
                 // เริ่มต้นการทำงานของ LIFF SDK
                 await liff.init({ liffId: LIFF_ID });
-                console.log("LIFF Initialized!");
+                // LIFF initialized successfully
                 
                 if (liff.isLoggedIn()) {
                     // หากล็อกอินแล้ว ให้ดึงข้อมูลโปรไฟล์
@@ -154,7 +168,10 @@
                     
                     // เปลี่ยนปุ่มล็อกอิน เป็นรูปภาพและชื่อของประชาชน
                     const btn = document.getElementById('lineLoginBtn');
-                    btn.innerHTML = `<img src="${profile.pictureUrl}" class="w-6 h-6 rounded-full mr-2 shadow"> <span class="truncate max-w-[120px]">สวัสดี, ${profile.displayName}</span>`;
+                    const safeName = profile.displayName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                    btn.innerHTML = `<img src="${profile.pictureUrl}" class="w-6 h-6 rounded-full mr-2 shadow" alt="${safeName}"> <span class="truncate max-w-[120px]">สวัสดี, ${safeName}</span>`;
+                    const benefits = document.getElementById('loginBenefits');
+                    if (benefits) benefits.style.display = 'none';
                     btn.onclick = () => { location.href = 'profile.html'; }; // กดแล้วไปหน้า Profile
                     
                     // อัปเดตข้อมูลผู้ใช้ใน LocalStorage ให้ api.js เอาไปใช้ต่อ

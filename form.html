@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ระบบรับเรื่องร้องเรียนออนไลน์ เทศบาลเมืองชุมแสง อำเภอชุมแสง จังหวัดนครสวรรค์ แจ้งปัญหา สาธารณูปโภค ถนน ขยะ น้ำท่วม">
+    <meta name="theme-color" content="#15803d">
     <title>ยื่นคำร้องใหม่ - เทศบาลเมืองชุมแสง</title>
     <link rel="icon" type="image/png" href="assets/images/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,6 +42,20 @@
     </header>
 
     <main class="max-w-md mx-auto p-4">
+        
+        <!-- Login Banner -->
+        <div id="loginBanner" class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 flex flex-col items-center text-center hidden">
+            <h3 class="font-bold text-brand-navy text-sm mb-1">เข้าสู่ระบบเพื่อรับสิทธิประโยชน์!</h3>
+            <p class="text-xs text-gray-600 mb-3 flex items-center justify-center space-x-3">
+                <span><i class="fas fa-bell text-yellow-500"></i> แจ้งเตือนสถานะ</span>
+                <span class="text-gray-300">|</span>
+                <span><i class="fas fa-history text-blue-500"></i> ดูประวัติย้อนหลัง</span>
+            </p>
+            <button type="button" onclick="loginWithLine()" class="bg-[#00B900] hover:bg-[#009900] text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center shadow-md transition transform hover:scale-105">
+                <i class="fab fa-line text-lg mr-2"></i> เข้าสู่ระบบด้วย Line
+            </button>
+        </div>
+
         <form id="complaintForm" onsubmit="submitForm(event)" class="bg-white p-6 rounded-2xl shadow">
             
             <input type="hidden" name="line_user_id" id="line_user_id" value=""> <!-- จะถูกเติมด้วย JS ถ้ามี LIFF -->
@@ -131,6 +147,32 @@
                 <input type="tel" name="phone" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-brand-green focus:border-brand-green block p-3" placeholder="08xxxxxxxx">
             </div>
 
+            <!-- รูปบัตรประชาชน (พร้อมลายน้ำอัตโนมัติ) -->
+            <div class="mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                    <i class="fas fa-id-card text-brand-navy mr-1"></i> ภาพถ่ายบัตรประชาชน <span class="text-red-500">*</span>
+                </label>
+                <p class="text-[11px] text-gray-600 mb-3 leading-relaxed">
+                    ระบบจะทำการขีดคร่อมลายน้ำ <strong>"สำเนาถูกต้อง..."</strong> ให้โดยอัตโนมัติ <br>
+                    ภาพต้นฉบับจะไม่ถูกส่งออกจากเครื่องของคุณ เพื่อความปลอดภัย
+                </p>
+                
+                <input type="file" id="id_card_file" accept="image/*" capture="environment" class="hidden" onchange="handleIdCardUpload(event)">
+                
+                <div id="id_card_preview_container" class="hidden relative mb-3">
+                    <img id="id_card_preview" src="" alt="ภาพบัตรประชาชน" class="w-full h-auto rounded-lg shadow-sm border border-gray-300">
+                    <button type="button" onclick="removeIdCard()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-red-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <button type="button" onclick="document.getElementById('id_card_file').click()" id="id_card_upload_btn" class="w-full bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500 hover:bg-gray-50 transition cursor-pointer">
+                    <i class="fas fa-camera text-2xl mb-2 text-brand-navy"></i>
+                    <p class="text-sm font-semibold text-brand-navy">ถ่ายรูป/แนบภาพบัตรประชาชน</p>
+                </button>
+                <input type="hidden" id="id_card_base64">
+            </div>
+
             <!-- จุดเกิดเหตุ / รายละเอียด -->
             <div class="mb-5">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">จุดเกิดเหตุ / รายละเอียด <span class="text-red-500">*</span></label>
@@ -204,7 +246,12 @@
             
             <div class="p-5 space-y-4 text-sm text-gray-700 overflow-y-auto flex-1">
                 <div class="text-center mb-4 hidden" id="preview_image_container">
+                    <div class="inline-block relative w-full mb-3">
+                        <p class="text-xs font-semibold text-gray-500 text-left mb-1">ภาพบัตรประชาชน (พร้อมลายน้ำ)</p>
+                        <img id="preview_modal_id_card" class="w-full max-h-48 object-contain rounded-xl border border-gray-200 bg-gray-50" alt="รูปบัตรประชาชน">
+                    </div>
                     <div class="inline-block relative w-full">
+                        <p class="text-xs font-semibold text-gray-500 text-left mb-1">ภาพประกอบจุดเกิดเหตุ</p>
                         <img id="preview_modal_image" class="w-full max-h-48 object-contain rounded-xl border border-gray-200 bg-gray-50" alt="รูปภาพปัญหา">
                     </div>
                 </div>
@@ -467,6 +514,14 @@
         async function submitForm(event) {
             event.preventDefault(); // Prevent standard form submission
 
+            // Custom validate GPS coordinates
+            const latVal = document.getElementById('latitude').value;
+            const lngVal = document.getElementById('longitude').value;
+            if (!latVal || !lngVal) {
+                alert('⚠️ กรุณาดึงพิกัดสถานที่เกิดเหตุก่อนกดส่งคำร้อง');
+                return;
+            }
+
             const form = event.target;
             const formData = new FormData(form);
             
@@ -504,6 +559,12 @@
             let prefixName = formData.get('prefix') || '';
             let combinedFullname = prefixName ? `${prefixName}${fName}` : fName;
 
+            const idCardBase64 = document.getElementById('id_card_base64').value;
+            if (!idCardBase64) {
+                alert('กรุณาถ่ายรูปหรืออัปโหลดภาพบัตรประชาชน');
+                return;
+            }
+
             const newComplaint = {
                 ticket_number: `${prefix}-${dateStr}${monthStr}${yearStr}-${randomId}`,
                 type: typeValue,
@@ -519,6 +580,7 @@
                 resolved_address: formData.get('resolved_address') || '',
                 details: formData.get('details') || '-',
                 image: imageBase64,
+                id_card_image: idCardBase64,
                 status: 'pending_admin',
                 date: now.toISOString()
             };
@@ -555,17 +617,39 @@
             } else {
                 locationText = `พิกัด: ${Number(complaint.latitude).toFixed(4)}, ${Number(complaint.longitude).toFixed(4)}`;
             }
-            document.getElementById('preview_location').innerHTML = `<i class="fas fa-map-marker-alt text-red-500 mt-1"></i> <span>${locationText}</span>`;
+            // Sanitize location text before injecting into HTML
+            const safeLocText = locationText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            document.getElementById('preview_location').innerHTML = `<i class="fas fa-map-marker-alt text-red-500 mt-1"></i> <span>${safeLocText}</span>`;
 
             // รูปภาพ
             const imgContainer = document.getElementById('preview_image_container');
             const imgPreview = document.getElementById('preview_modal_image');
+            const idCardPreview = document.getElementById('preview_modal_id_card');
+            
+            let hasAnyImage = false;
+            
             if (complaint.image) {
                 imgPreview.src = complaint.image;
+                imgPreview.parentElement.classList.remove('hidden');
+                hasAnyImage = true;
+            } else {
+                imgPreview.src = '';
+                imgPreview.parentElement.classList.add('hidden');
+            }
+
+            if (complaint.id_card_image) {
+                idCardPreview.src = complaint.id_card_image;
+                idCardPreview.parentElement.classList.remove('hidden');
+                hasAnyImage = true;
+            } else {
+                idCardPreview.src = '';
+                idCardPreview.parentElement.classList.add('hidden');
+            }
+
+            if (hasAnyImage) {
                 imgContainer.classList.remove('hidden');
             } else {
                 imgContainer.classList.add('hidden');
-                imgPreview.src = '';
             }
 
             // แสดง Modal
@@ -620,6 +704,78 @@
             }
         }
 
+        function handleIdCardUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // วาดรูปต้นฉบับลงไป
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // เตรียมข้อความลายน้ำ
+                    const today = new Date();
+                    const dateStr = today.toLocaleDateString('th-TH', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    const text1 = "สำเนาถูกต้อง";
+                    const text2 = "ใช้สำหรับประกอบการยื่นคำร้องเรียนต่อเทศบาลเมืองชุมแสงเท่านั้น";
+                    const text3 = `ประจำวันที่ ${dateStr}`;
+
+                    // ตั้งค่าฟอนต์ สี และความโปร่งแสง
+                    ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // สีแดง โปร่งแสง 50%
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+
+                    // คำนวณขนาดฟอนต์ให้พอดีกับรูปภาพ (ประมาณ 1/25 ของความกว้าง)
+                    const fontSize = Math.max(24, Math.floor(canvas.width / 25));
+                    ctx.font = `bold ${fontSize}px sans-serif`;
+
+                    // หมุน context เพื่อเขียนแนวทแยง
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(-Math.PI / 6); // เอียง -30 องศา
+
+                    // เขียนข้อความ 3 บรรทัด
+                    const lineSpacing = fontSize * 1.5;
+                    ctx.fillText(text1, 0, -lineSpacing);
+                    ctx.fillText(text2, 0, 0);
+                    ctx.fillText(text3, 0, lineSpacing);
+
+                    // คืนค่า context กลับ
+                    ctx.rotate(Math.PI / 6);
+                    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+                    // แปลงเป็น base64 กลับมาเพื่อเก็บและแสดงผล
+                    const watermarkedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    document.getElementById('id_card_base64').value = watermarkedBase64;
+                    document.getElementById('id_card_preview').src = watermarkedBase64;
+                    document.getElementById('id_card_preview_container').classList.remove('hidden');
+                    document.getElementById('id_card_upload_btn').classList.add('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeIdCard() {
+            document.getElementById('id_card_file').value = '';
+            document.getElementById('id_card_base64').value = '';
+            document.getElementById('id_card_preview').src = '';
+            document.getElementById('id_card_preview_container').classList.add('hidden');
+            document.getElementById('id_card_upload_btn').classList.remove('hidden');
+        }
+
         // Auto Select Dropdown based on URL parameter
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -631,6 +787,67 @@
                 }
             }
         }
+    </script>
+
+    <!-- LIFF SDK & Initialization for Form -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        const LIFF_ID = "2009692692-648m8A9p";
+        
+        async function initLineLiff() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    // Hide banner if logged in
+                    document.getElementById('loginBanner').classList.add('hidden');
+                    
+                    // Fetch profile
+                    const profile = await liff.getProfile();
+                    let currentProfile = JSON.parse(localStorage.getItem('chumsaeng_user_profile')) || {};
+                    currentProfile.fullname = profile.displayName;
+                    currentProfile.lineUserId = profile.userId;
+                    localStorage.setItem('chumsaeng_user_profile', JSON.stringify(currentProfile));
+
+                    // Autofill name if empty
+                    const nameInput = document.querySelector('input[name="fullname"]');
+                    if (nameInput && !nameInput.value) {
+                        nameInput.value = currentProfile.fullname || profile.displayName;
+                    }
+                    const phoneInput = document.querySelector('input[name="phone"]');
+                    if (phoneInput && !phoneInput.value && currentProfile.phone && currentProfile.phone !== '-') {
+                        phoneInput.value = currentProfile.phone;
+                    }
+                    const lineIdInput = document.getElementById('line_user_id');
+                    if (lineIdInput) lineIdInput.value = profile.userId;
+                } else {
+                    document.getElementById('loginBanner').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error("LIFF Initialization failed", err);
+                document.getElementById('loginBanner').classList.remove('hidden');
+            }
+        }
+
+        function loginWithLine() {
+            if (!liff.isLoggedIn()) {
+                liff.login({ redirectUri: window.location.href });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initLineLiff();
+            
+            // Auto-fill from localStorage early if available
+            let currentProfile = JSON.parse(localStorage.getItem('chumsaeng_user_profile')) || {};
+            if (currentProfile.fullname && currentProfile.fullname !== 'บุคคลทั่วไป') {
+                const nameInput = document.querySelector('input[name="fullname"]');
+                if (nameInput && !nameInput.value) nameInput.value = currentProfile.fullname;
+            }
+            if (currentProfile.phone && currentProfile.phone !== '-') {
+                const phoneInput = document.querySelector('input[name="phone"]');
+                if (phoneInput && !phoneInput.value) phoneInput.value = currentProfile.phone;
+            }
+        });
     </script>
 </body>
 </html>
