@@ -180,9 +180,36 @@
                     currentProfile.lineUserId = profile.userId;
                     currentProfile.pictureUrl = profile.pictureUrl;
                     localStorage.setItem('chumsaeng_user_profile', JSON.stringify(currentProfile));
+
+                    // ตรวจสอบการเป็นเพื่อน
+                    try {
+                        const friendship = await liff.getFriendship();
+                        if (!friendship.friendFlag) {
+                            showFriendshipModal();
+                        }
+                    } catch (friendshipErr) {
+                        console.error("Failed to check friendship status", friendshipErr);
+                    }
                 }
             } catch (err) {
                 console.error("LIFF Initialization failed", err);
+            }
+        }
+
+        // ฟังก์ชันเปิด/ปิดกล่องแจ้งเตือนการเพิ่มเพื่อน
+        function showFriendshipModal() {
+            const modal = document.getElementById('friendshipModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeFriendshipModal() {
+            const modal = document.getElementById('friendshipModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
             }
         }
 
@@ -198,5 +225,30 @@
             initLineLiff();
         });
     </script>
+
+    <!-- LINE Friendship Check Alert Modal -->
+    <div id="friendshipModal" class="fixed inset-0 z-[9999] hidden bg-black bg-opacity-60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-sm flex flex-col shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-all duration-300">
+            <div class="w-16 h-16 bg-green-100 text-brand-green rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fab fa-line text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">ยังไม่ได้เป็นเพื่อนกับระบบ LINE</h3>
+            <p class="text-sm text-gray-600 mb-4 leading-relaxed">
+                เพื่อให้คุณสามารถรับการแจ้งเตือน ดูประวัติสถานะร้องเรียน และติดตามผลการดำเนินการได้ กรุณากดเพิ่มเพื่อนในขั้นตอนถัดไป
+            </p>
+            <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 flex flex-col items-center">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://line.me/R/ti/p/%40577hdhtk" alt="LINE QR Code" class="w-36 h-36 mb-2 border border-gray-200 rounded-lg p-1 bg-white">
+                <span class="text-xs text-gray-500 font-semibold">LINE ID: @577hdhtk</span>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <a href="https://line.me/R/ti/p/%40577hdhtk" target="_blank" class="w-full bg-[#00B900] hover:bg-[#009900] text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center">
+                    <i class="fab fa-line mr-2 text-lg"></i> เพิ่มเพื่อน LINE (คลิกเลย)
+                </a>
+                <button onclick="closeFriendshipModal()" class="w-full text-gray-400 hover:text-gray-600 font-semibold text-xs py-2">
+                    ไว้ทีหลัง
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
