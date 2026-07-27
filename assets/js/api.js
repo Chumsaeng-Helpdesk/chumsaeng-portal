@@ -6,7 +6,7 @@
 // ======================================
 // ⚙️ การตั้งค่าระบบหลัก
 // ======================================
-const USE_REAL_BACKEND = true; // ✅ Production Mode — เชื่อมต่อ Supabase จริง
+const USE_REAL_BACKEND = false; // เปิดใช้ Backend จำลอง (LocalStorage) สำหรับเวอร์ชั่นทดสอบ
 const SUPABASE_URL = 'https://qwkwjrxwuoblklzzqnma.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3a3dqcnh3dW9ibGtsenpxbm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzA1NjMsImV4cCI6MjA5MDM0NjU2M30.Nrw3C5MiZblEbiLWnsb-Bl78pIkyrFurk6qSX32krHk';
 
@@ -18,15 +18,11 @@ const API = {
     getComplaints: async function() {
         if (USE_REAL_BACKEND) {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/complaints?select=*&order=created_at.desc`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
+                // เรียกใช้ Vercel Serverless Function แทนการยิงตรงไป Supabase
+                const res = await fetch('/api/getComplaints');
                 if (!res.ok) throw new Error('Fetch failed');
-                const data = await res.json();
-                return Array.isArray(data) ? data : [];
+                const json = await res.json();
+                return json.status === 'success' && Array.isArray(json.data) ? json.data : [];
             } catch (err) {
                 console.error("API Error getComplaints", err);
                 return [];
@@ -46,17 +42,36 @@ const API = {
     submitComplaint: async function(complaintData) {
         if (USE_REAL_BACKEND) {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/complaints`, {
+                // จัดเตรียม Payload ให้สอดคล้องกับความต้องการของ Serverless API และ DB Schema
+                const payload = {
+                    ...complaintData,
+                    complaint_type: complaintData.type, // แมป 'type' ไปที่ 'complaint_type'
+                    image: complaintData.image || null,
+                    // แปลงค่าอายุเป็นตัวเลข หรือ null (เพื่อไม่ให้ส่งสตริง '-' เข้า DB INT)
+                    age: (complaintData.age && complaintData.age !== '-') ? parseInt(complaintData.age) : null
+                };
+
+                const res = await fetch('/api/submitComplaint', {
                     method: 'POST',
                     headers: { 
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(complaintData)
+                    body: JSON.stringify(payload)
                 });
-                return res.ok;
+                
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({}));
+                    console.error("Submit Complaint Server Error:", errJson);
+                    return false;
+                }
+
+                const json = await res.json();
+                if (json.status === 'success' && json.data) {
+                    // นำเลขที่ตั๋วที่เซิร์ฟเวอร์สร้างมาใส่กลับใน object เพื่อแสดงผลใน UI สำเร็จ
+                    complaintData.ticket_number = json.data.ticket_number;
+                    return true;
+                }
+                return false;
             } catch (err) {
                 console.error("API Error submitComplaint", err);
                 return false;
@@ -81,17 +96,15 @@ const API = {
     updateStatus: async function(ticketNumber, newStatus, extraData = {}) {
         if (USE_REAL_BACKEND) {
             try {
-                const payload = { status: newStatus, ...extraData };
-                if (newStatus === 'resolved' || newStatus === 'rejected') {
-                    payload.resolved_date = new Date().toISOString();
-                }
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/complaints?ticket_number=eq.${ticketNumber}`, {
-                    method: 'PATCH',
+                const payload = { 
+                    ticket_number: ticketNumber,
+                    status: newStatus, 
+                    ...extraData 
+                };
+                const res = await fetch('/api/updateStatus', {
+                    method: 'POST',
                     headers: { 
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
