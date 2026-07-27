@@ -59,7 +59,7 @@ export default async function handler(req, res) {
                 latitude: body.latitude ? parseFloat(body.latitude) : null,
                 longitude: body.longitude ? parseFloat(body.longitude) : null,
                 image_path: body.image || null, // ส่ง Base64 มาก่อนในช่วง Prototype
-                status: 'pending'
+                status: 'pending_admin'
             }])
             .select();
 

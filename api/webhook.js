@@ -50,7 +50,11 @@ export default async function handler(req, res) {
                         // พบข้อมูล
                         const latest = tickets[0];
                         const typeLabels = {
-                            'pending': '⏳ รอดำเนินการ',
+                            'pending_admin': '⏳ รอดำเนินการ',
+                            'pending_director': '⏳ รอดำเนินการ',
+                            'pending_clerk': '⏳ รอดำเนินการ',
+                            'pending_mayor': '⏳ รอดำเนินการ',
+                            'assigned': '📋 รับเรื่องแล้ว',
                             'in_progress': '🛠️ กำลังออกซ่อม',
                             'resolved': '✅ แก้ไขเสร็จสิ้น',
                             'rejected': '❌ ปฏิเสธการรับเรื่อง'
