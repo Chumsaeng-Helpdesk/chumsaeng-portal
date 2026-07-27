@@ -78,10 +78,12 @@ export default async function handler(req, res) {
 
         if (lineToken && lineTarget) {
             const typeLabels = {
-                'maintenance': 'ไฟฟ้า/ประปา',
-                'garbage': 'ปัญหาขยะ',
+                'electricity': 'ไฟฟ้าส่องสว่าง',
+                'water': 'ประปาชำรุด',
+                'garbage': 'ปัญหาขยะ/สิ่งปฏิกูล',
                 'road': 'ถนนชำรุด',
-                'flood': 'แจ้งน้ำท่วม',
+                'drainage': 'ดันท่อระบายน้ำ',
+                'pump': 'ขออนุเคราะห์เครื่องสูบน้ำ',
                 'other': 'เรื่องอื่นๆ'
             };
             const typeLabel = typeLabels[body.complaint_type] || 'อื่นๆ';
