@@ -163,7 +163,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-3 sm:space-y-0">
                 <h2 class="text-2xl font-bold text-gray-800">ผู้ใช้งานในระบบ</h2>
                 <div class="flex space-x-3 w-full sm:w-auto">
-                    <button class="flex-1 sm:flex-none bg-brand-navy hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition flex items-center justify-center">
+                    <button onclick="openAddUserModal()" class="flex-1 sm:flex-none bg-brand-navy hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition flex items-center justify-center">
                         <i class="fas fa-user-plus mr-2"></i> เพิ่มเจ้าหน้าที่
                     </button>
                 </div>
@@ -184,13 +184,6 @@
                         </thead>
                         <tbody class="text-sm">
                             <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                                <td class="py-3 px-4 font-bold text-gray-800"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-brand-green text-white flex justify-center items-center mr-3"><i class="fas fa-user"></i></div> สมชาย ใจดี</div></td>
-                                <td class="py-3 px-4 text-gray-600">089-123-4567</td>
-                                <td class="py-3 px-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">ประชาชนทั่วไป</span></td>
-                                <td class="py-3 px-4"><span class="text-green-600"><i class="fab fa-line text-lg"></i> LINE</span></td>
-                                <td class="py-3 px-4 text-right"><button class="text-gray-400 hover:text-brand-navy"><i class="fas fa-edit"></i></button></td>
-                            </tr>
-                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                                 <td class="py-3 px-4 font-bold text-gray-800"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-blue-500 text-white flex justify-center items-center mr-3">AD</div> Admin</div></td>
                                 <td class="py-3 px-4 text-gray-600">-</td>
                                 <td class="py-3 px-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">ผู้ดูแลระบบ</span></td>
@@ -210,7 +203,49 @@
         </main>
     </div>
 
-    <!-- Modals Removed for Users page -->
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">เพิ่มเจ้าหน้าที่</h3>
+            <form id="addUserForm" onsubmit="saveNewUser(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                        <input type="text" id="addFullname" required class="w-full text-sm border-gray-300 rounded-lg p-2.5 focus:ring-brand-green focus:border-brand-green bg-gray-50 outline-none" placeholder="เช่น นายวันชัย สายเสมอ">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
+                        <input type="tel" id="addPhone" required class="w-full text-sm border-gray-300 rounded-lg p-2.5 focus:ring-brand-green focus:border-brand-green bg-gray-50 outline-none" placeholder="เช่น 0891234567">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">บทบาทหน้าที่ <span class="text-red-500">*</span></label>
+                        <select id="addRole" required class="w-full text-sm border-gray-300 rounded-lg p-2.5 focus:ring-brand-green focus:border-brand-green bg-gray-50 outline-none">
+                            <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                            <option value="director">ผู้อำนวยการกอง (Director)</option>
+                            <option value="clerk">ปลัดเทศบาล (Clerk)</option>
+                            <option value="mayor">นายกเทศมนตรี (Mayor)</option>
+                            <option value="staff">เจ้าหน้าที่/ช่างผู้รับผิดชอบ (Staff)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">ช่องทางใช้งาน <span class="text-red-500">*</span></label>
+                        <select id="addChannel" required class="w-full text-sm border-gray-300 rounded-lg p-2.5 focus:ring-brand-green focus:border-brand-green bg-gray-50 outline-none">
+                            <option value="backoffice">ระบบหลังบ้าน (Web Portal)</option>
+                            <option value="line">LINE Mini App</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="closeAddUserModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-semibold transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="flex-1 bg-brand-green hover:bg-green-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+                        บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-10 hidden md:hidden"></div>
@@ -221,12 +256,149 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     
     <script>
-        $(document).ready(function() {
+        let systemUsers = [];
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        };
+
+        function loadSystemUsers() {
+            // Load from localStorage or initialize with defaults
+            const stored = localStorage.getItem('chumsaeng_system_users');
+            if (stored) {
+                systemUsers = JSON.parse(stored);
+            } else {
+                systemUsers = [
+                    { fullname: 'Admin', phone: '-', role: 'admin', channel: 'backoffice' }
+                ];
+                localStorage.setItem('chumsaeng_system_users', JSON.stringify(systemUsers));
+            }
+            renderUsersTable();
+        }
+
+        const roleLabels = {
+            'admin': 'ผู้ดูแลระบบ',
+            'director': 'ผู้อำนวยการกอง',
+            'clerk': 'ปลัดเทศบาล',
+            'mayor': 'นายกเทศมนตรี',
+            'staff': 'เจ้าหน้าที่/ช่าง'
+        };
+        const roleBadgeColors = {
+            'admin': 'bg-blue-100 text-blue-800',
+            'director': 'bg-orange-100 text-orange-800',
+            'clerk': 'bg-purple-100 text-purple-800',
+            'mayor': 'bg-indigo-100 text-indigo-800',
+            'staff': 'bg-emerald-100 text-emerald-800'
+        };
+        const roleAvatarColors = {
+            'admin': 'bg-slate-500',
+            'director': 'bg-orange-500',
+            'clerk': 'bg-purple-500',
+            'mayor': 'bg-indigo-500',
+            'staff': 'bg-emerald-500'
+        };
+
+        function renderUsersTable() {
+            let rows = '';
+            
+            systemUsers.forEach((user, index) => {
+                const badgeColor = roleBadgeColors[user.role] || 'bg-gray-100 text-gray-800';
+                const avatarColor = roleAvatarColors[user.role] || 'bg-slate-500';
+                const label = roleLabels[user.role] || user.role;
+                const channelHtml = user.channel === 'line' 
+                    ? '<span class="text-green-600 flex items-center gap-1"><i class="fab fa-line text-lg"></i> LINE</span>'
+                    : '<span class="text-gray-500 flex items-center gap-1"><i class="fas fa-desktop"></i> ระบบหลังบ้าน</span>';
+                
+                // Get initials
+                const initials = user.fullname.substring(0, 2).toUpperCase();
+
+                rows += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="py-3 px-4 font-bold text-gray-800">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full ${avatarColor} text-white flex justify-center items-center mr-3 font-semibold text-xs">${initials}</div>
+                                ${escapeHTML(user.fullname)}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-600">${escapeHTML(user.phone)}</td>
+                        <td class="py-3 px-4"><span class="${badgeColor} px-2 py-1 rounded text-xs font-bold">${label}</span></td>
+                        <td class="py-3 px-4">${channelHtml}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="deleteUser(${index})" class="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-100 hover:bg-red-50 px-2.5 py-1 rounded-lg transition"><i class="fas fa-trash mr-1"></i> ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Re-initialize DataTable
+            if ($.fn.DataTable.isDataTable('#usersTable')) {
+                $('#usersTable').DataTable().clear().destroy();
+            }
+
+            $('#usersTable tbody').html(rows);
+
             $('#usersTable').DataTable({
                 responsive: true,
                 language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json' },
                 pageLength: 10
             });
+        }
+
+        function openAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('hidden');
+        }
+
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').classList.add('hidden');
+            document.getElementById('addUserForm').reset();
+        }
+
+        function saveNewUser(e) {
+            e.preventDefault();
+            const fullname = document.getElementById('addFullname').value.trim();
+            const phone = document.getElementById('addPhone').value.trim();
+            const role = document.getElementById('addRole').value;
+            const channel = document.getElementById('addChannel').value;
+
+            if (!fullname || !phone) return;
+
+            systemUsers.push({ fullname, phone, role, channel });
+            localStorage.setItem('chumsaeng_system_users', JSON.stringify(systemUsers));
+
+            closeAddUserModal();
+            loadSystemUsers();
+            alert('เพิ่มเจ้าหน้าที่เสร็จสมบูรณ์');
+        }
+
+        function deleteUser(index) {
+            const user = systemUsers[index];
+            if (user.role === 'admin' && user.fullname === 'Admin') {
+                alert('ไม่สามารถลบผู้ดูแลระบบหลักได้');
+                return;
+            }
+            if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเจ้าหน้าที่ "${user.fullname}"?`)) {
+                const securityCheck = prompt('กรุณาพิมพ์คำว่า "confirm" เพื่อยืนยันการลบเจ้าหน้าที่:');
+                if (securityCheck === 'confirm') {
+                    systemUsers.splice(index, 1);
+                    localStorage.setItem('chumsaeng_system_users', JSON.stringify(systemUsers));
+                    loadSystemUsers();
+                    alert('ลบเจ้าหน้าที่เรียบร้อยแล้ว');
+                } else if (securityCheck !== null) {
+                    alert('คำสั่งยืนยันไม่ถูกต้อง การลบถูกยกเลิก');
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            loadSystemUsers();
 
             // Mobile Menu Toggle Logic
             const sidebar = document.getElementById('sidebar');
@@ -246,24 +418,11 @@
             menuBtn.addEventListener('click', toggleSidebar);
             overlay.addEventListener('click', toggleSidebar);
         });
-    </script>
-    <script>
+
         function initializeUI() {
             const role = sessionStorage.getItem('user_role') || 'admin';
             let title = sessionStorage.getItem('user_title') || 'ผู้ดูแลระบบ';
             
-            const escapeHTML = (str) => {
-                if (!str) return '';
-                return str.replace(/[&<>'"]/g, 
-                    tag => ({
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        "'": '&#39;',
-                        '"': '&quot;'
-                    }[tag] || tag)
-                );
-            };
             title = escapeHTML(title);
 
             const sidebarEl = document.getElementById('sidebar');

@@ -142,13 +142,25 @@
 
             <!-- Right: Notifications & Profile -->
             <div class="flex items-center space-x-4">
-                <button class="text-gray-400 hover:text-brand-green relative focus:outline-none">
-                    <i class="far fa-bell text-xl"></i>
-                    <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
-                </button>
+                <div class="relative">
+                    <button id="notificationBellBtn" onclick="toggleNotificationDropdown(event)" class="text-gray-400 hover:text-brand-green relative focus:outline-none flex items-center">
+                        <i class="far fa-bell text-xl"></i>
+                        <span id="bellBadge" class="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3 hidden">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                    </button>
+                    <!-- Notification Dropdown Menu -->
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-[100] py-2">
+                        <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                            <span class="font-bold text-sm text-gray-800">แจ้งเตือนใหม่</span>
+                            <span id="notificationCountBadge" class="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="notificationList" class="max-h-64 overflow-y-auto divide-y divide-gray-50">
+                            <!-- Items injected via JS -->
+                        </div>
+                    </div>
+                </div>
                 <div class="border-l pl-4 border-gray-200 flex items-center">
                     <span class="text-sm font-medium text-gray-700 mr-2 hidden sm:block" id="topbarWelcome">สวัสดี, Admin</span>
                     <div class="w-8 h-8 rounded-full bg-brand-green text-white flex items-center justify-center cursor-pointer shadow-sm">
@@ -270,13 +282,13 @@
             </div>
             <div class="p-5 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
+                    <div class="min-w-0">
                         <p class="text-xs text-gray-500 font-semibold uppercase">ประเภทปัญหา</p>
                         <p class="font-medium text-gray-800" id="modalType"></p>
                     </div>
-                    <div>
-                        <p class="text-xs text-gray-500 font-semibold uppercase">เรื่อง (หัวข้อ)</p>
-                        <p class="font-medium text-gray-800" id="modalSubject"></p>
+                    <div class="min-w-0">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">รายละเอียดเพิ่มเติมคำร้อง</p>
+                        <p class="font-medium text-gray-800 break-words break-all" id="modalSubject"></p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -471,16 +483,11 @@
             let visibleStatuses = roleStatusMap[userRole] || roleStatusMap['admin'];
             let complaints = allComplaints.filter(c => visibleStatuses.includes(c.status || 'pending_admin'));
 
+            // Store in global variable
             globalComplaints = complaints;
-            
-            // Add dummy data if empty so the UI doesn't look broken
-            if(complaints.length === 0 && !USE_REAL_BACKEND) {
-                complaints = [
-                    { ticket_number: 'R-150326-001', type: 'road', fullname: 'สมชาย ใจดี', phone: '0812345678', details: 'ถนนเป็นหลุมบ่อหน้าตลาดสด ลึกมาก รถสัญจรลำบาก', image: '', status: 'pending', date: new Date().toISOString() }
-                ];
-                localStorage.setItem('chumsaeng_complaints', JSON.stringify(complaints));
-                globalComplaints = complaints;
-            }
+
+            // Update notification bell for user's visible complaints
+            updateNotificationBell(complaints);
 
             // Update Cards
             $('#stat_total').text(complaints.length);
@@ -701,7 +708,7 @@
             let s = c.status || 'pending_admin';
             
             if (userRole === 'admin' && (s === 'pending_admin' || s === 'pending')) {
-                buttonsHtml += `<button class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('pending_director')">รับเรื่องและส่งต่อผู้อำนวยการกอง</button>`;
+                buttonsHtml += `<button class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold transition mr-2" onclick="updateStatus('pending_director')">รับเรื่องและส่งต่อผู้อำนวยการกอง</button>`;
             } 
             else if (userRole === 'director' && s === 'pending_director') {
                 buttonsHtml += `<button class="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('pending_clerk')">เสนอปลัดเทศบาล</button>`;
@@ -718,6 +725,10 @@
                 } else if (s === 'in_progress') {
                     buttonsHtml += `<button class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition" onclick="updateStatus('resolved')">แก้ไขเสร็จสิ้น</button>`;
                 }
+            }
+
+            if (userRole === 'admin') {
+                buttonsHtml += `<button class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold transition flex items-center justify-center" onclick="deleteSingleComplaint(${index})"><i class="fas fa-trash-alt mr-1"></i> ลบคำร้อง</button>`;
             }
 
             if (buttonsHtml === '') {
@@ -817,6 +828,107 @@
                 } else if (code !== null) {
                     alert('การลบข้อมูลถูกยกเลิก เนื่องจากพิมพ์คำยืนยันไม่ถูกต้อง');
                 }
+            }
+        }
+
+        async function deleteSingleComplaint(index) {
+            let c = globalComplaints[index];
+            if (!c) return;
+            
+            if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบคำร้องเลขที่ "${c.ticket_number}"? \nข้อมูลที่ถูกลบจะไม่สามารถกู้คืนได้`)) {
+                let code = prompt("หากต้องการยืนยันการลบ กรุณาพิมพ์คำว่า: confirm");
+                if (code === "confirm") {
+                    let complaints = JSON.parse(localStorage.getItem('chumsaeng_complaints')) || [];
+                    complaints = complaints.filter(item => item.ticket_number !== c.ticket_number);
+                    localStorage.setItem('chumsaeng_complaints', JSON.stringify(complaints));
+                    
+                    alert('ลบคำร้องเรียบร้อยแล้ว');
+                    closeModal();
+                    await loadDashboardData();
+                } else if (code !== null) {
+                    alert('การลบข้อมูลถูกยกเลิก เนื่องจากพิมพ์คำยืนยันไม่ถูกต้อง');
+                }
+            }
+        }
+
+        function updateNotificationBell(complaints) {
+            // Filter pending/new complaints for notifications
+            const pendingComplaints = complaints.filter(c => ['pending_admin', 'pending', 'pending_director', 'pending_clerk', 'pending_mayor'].includes(c.status || 'pending_admin'));
+            
+            const bellBadge = document.getElementById('bellBadge');
+            const countBadge = document.getElementById('notificationCountBadge');
+            const listEl = document.getElementById('notificationList');
+            
+            if (pendingComplaints.length > 0) {
+                if (bellBadge) bellBadge.classList.remove('hidden');
+                if (countBadge) {
+                    countBadge.textContent = pendingComplaints.length;
+                    countBadge.classList.remove('hidden');
+                }
+                
+                let html = '';
+                // Get latest 5
+                const latest = pendingComplaints.slice(0, 5);
+                
+                const thaiTypes = {
+                    'electricity': 'ไฟฟ้าส่องสว่าง',
+                    'water': 'ประปาชำรุด',
+                    'garbage': 'ปัญหาขยะ',
+                    'road': 'ถนนชำรุด',
+                    'drainage': 'ดันท่อระบายน้ำ',
+                    'pump': 'ขอเครื่องสูบน้ำ',
+                    'other': 'เรื่องอื่นๆ'
+                };
+                
+                latest.forEach((c) => {
+                    const typeLabel = thaiTypes[c.type] || 'เรื่องอื่นๆ';
+                    const subject = c.subject || c.details || '';
+                    
+                    html += `
+                        <div onclick="openNotificationComplaint('${c.ticket_number}', event)" class="px-4 py-3 hover:bg-gray-50 transition cursor-pointer text-left">
+                            <p class="text-xs font-bold text-brand-navy mb-0.5">มีคำร้องส่งเข้ามาใหม่</p>
+                            <p class="text-xs text-gray-700 truncate font-semibold">${typeLabel}: ${subject}</p>
+                            <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-ticket-alt mr-1"></i> ${c.ticket_number}</p>
+                        </div>
+                    `;
+                });
+                if (listEl) listEl.innerHTML = html;
+            } else {
+                if (bellBadge) bellBadge.classList.add('hidden');
+                if (countBadge) countBadge.textContent = '0';
+                if (listEl) {
+                    listEl.innerHTML = `
+                        <div class="px-4 py-6 text-center text-gray-500 text-xs italic">
+                            <i class="far fa-bell-slash text-xl mb-2 text-gray-300 block"></i>
+                            ไม่มีแจ้งเตือนใหม่
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function toggleNotificationDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', () => {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function openNotificationComplaint(ticketNumber, e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            
+            const index = globalComplaints.findIndex(c => c.ticket_number === ticketNumber);
+            if (index !== -1) {
+                openModal(index);
             }
         }
 

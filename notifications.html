@@ -33,7 +33,26 @@
         <h1 class="text-xl font-bold text-center">การแจ้งเตือน</h1>
     </header>
 
-    <main class="max-w-md mx-auto relative">
+    <main class="max-w-md mx-auto relative p-4">
+        <!-- State: Not Logged In -->
+        <div id="login-required-state" class="text-center py-12 px-6 bg-white rounded-2xl shadow-lg my-6 hidden">
+            <div class="w-16 h-16 bg-green-50 text-[#00B900] rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fab fa-line text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">ยังไม่ได้เข้าสู่ระบบ</h3>
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed max-w-xs mx-auto">
+                กรุณาเข้าสู่ระบบด้วย LINE เพื่อรับการแจ้งเตือนสถานะคำร้องของคุณ
+            </p>
+            <a href="index.html?action=login" class="inline-flex w-full max-w-xs bg-[#00B900] hover:bg-[#009900] text-white font-bold py-3.5 px-6 rounded-full shadow-lg hover:shadow-xl transition justify-center items-center mx-auto mb-5">
+                <i class="fab fa-line mr-2 text-2xl"></i> เข้าสู่ระบบด้วย LINE
+            </a>
+            <div class="border-t border-gray-100 pt-4 text-left max-w-xs mx-auto">
+                <p class="text-[11px] text-gray-500 leading-relaxed">
+                    <strong class="text-brand-navy">หมายเหตุ:</strong> ระบบจะส่งการแจ้งเตือนเฉพาะคำร้องที่ส่งหลังเข้าสู่ระบบด้วย LINE แล้วเท่านั้น หากยื่นคำร้องโดยไม่ได้เข้าสู่ระบบ จะไม่สามารถรับการแจ้งเตือนได้
+                </p>
+            </div>
+        </div>
+
         <div class="bg-white shadow-sm min-h-screen" id="notifications-list">
             <!-- Notifications injected by JS -->
         </div>
@@ -67,7 +86,18 @@
         document.addEventListener('DOMContentLoaded', async () => {
             localStorage.setItem('has_seen_notifications', 'true');
             const listEl = document.getElementById('notifications-list');
-            const complaints = await API.getComplaints();
+
+            const profile = JSON.parse(localStorage.getItem('chumsaeng_user_profile')) || {};
+            const userLineId = profile.lineUserId || null;
+
+            if (!userLineId) {
+                document.getElementById('login-required-state').classList.remove('hidden');
+                listEl.classList.add('hidden');
+                return;
+            }
+
+            const allComplaints = await API.getComplaints();
+            const complaints = allComplaints.filter(c => c.line_user_id === userLineId);
 
             let html = '';
 

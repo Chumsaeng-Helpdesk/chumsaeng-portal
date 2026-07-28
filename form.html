@@ -273,8 +273,8 @@
                     </div>
                     
                     <div class="flex justify-between items-start border-b border-gray-200 pb-2">
-                        <span class="font-semibold text-gray-500 w-1/3">หัวข้อ:</span>
-                        <span id="preview_subject" class="w-2/3 text-right font-medium text-gray-900"></span>
+                        <span class="font-semibold text-gray-500 w-5/12 text-left shrink-0">รายละเอียดเพิ่มเติมคำร้อง:</span>
+                        <span id="preview_subject" class="w-7/12 text-right font-medium text-gray-900 break-words break-all"></span>
                     </div>
 
                     <div class="flex justify-between items-start border-b border-gray-200 pb-2">
@@ -689,7 +689,8 @@
                 image: imageBase64,
                 id_card_image: idCardBase64,
                 status: 'pending_admin',
-                date: now.toISOString()
+                date: now.toISOString(),
+                line_user_id: formData.get('line_user_id') || null
             };
 
             // แสดงหน้าพรีวิวข้อมูลแทนการส่งทันที

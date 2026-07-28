@@ -67,6 +67,8 @@
             <a href="form.html" class="inline-block w-full bg-gradient-to-r from-green-500 to-brand-green text-white font-bold text-xl py-4 rounded-full shadow-lg hover:shadow-xl transition flex justify-center items-center">
                 ยื่นคำร้องใหม่ <i class="fas fa-chevron-right ml-2 text-sm"></i>
             </a>
+        </div>
+
         <!-- Quick Services -->
         <div class="mb-6">
             <h3 class="text-brand-navy font-bold mb-3 border-l-4 border-brand-green pl-2">บริการด่วน</h3>
@@ -170,7 +172,26 @@
             try {
                 // เริ่มต้นการทำงานของ LIFF SDK
                 await liff.init({ liffId: LIFF_ID });
-                // LIFF initialized successfully
+                
+                // ตรวจสอบว่ามีคำสั่งออกจากระบบ (logout) หรือไม่
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('action') === 'logout') {
+                    if (liff.isLoggedIn()) {
+                        liff.logout();
+                    }
+                    localStorage.removeItem('chumsaeng_user_profile');
+                    // ลบ query parameter ออกจาก URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                // ตรวจสอบว่ามีคำสั่งเข้าสู่ระบบ (login) หรือไม่
+                if (urlParams.get('action') === 'login') {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    }
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                }
                 
                 if (liff.isLoggedIn()) {
                     // หากล็อกอินแล้ว ให้ดึงข้อมูลโปรไฟล์

@@ -37,6 +37,25 @@
 
     <main class="max-w-md mx-auto p-4">
 
+        <!-- State: Not Logged In -->
+        <div id="login-required-state" class="text-center py-12 px-6 bg-white rounded-2xl shadow-lg my-6 hidden">
+            <div class="w-16 h-16 bg-green-50 text-[#00B900] rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fab fa-line text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">ยังไม่ได้เข้าสู่ระบบ</h3>
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed max-w-xs mx-auto">
+                กรุณาเข้าสู่ระบบด้วย LINE เพื่อตรวจสอบความคืบหน้าและประวัติคำร้องของคุณ
+            </p>
+            <a href="index.html?action=login" class="inline-flex w-full max-w-xs bg-[#00B900] hover:bg-[#009900] text-white font-bold py-3.5 px-6 rounded-full shadow-lg hover:shadow-xl transition justify-center items-center mx-auto mb-5">
+                <i class="fab fa-line mr-2 text-2xl"></i> เข้าสู่ระบบด้วย LINE
+            </a>
+            <div class="border-t border-gray-100 pt-4 text-left max-w-xs mx-auto">
+                <p class="text-[11px] text-gray-500 leading-relaxed">
+                    <strong class="text-brand-navy">หมายเหตุ:</strong> ระบบจะแสดงเฉพาะคำร้องที่ส่งหลังเข้าสู่ระบบด้วย LINE แล้วเท่านั้น หากยื่นคำร้องโดยไม่ได้เข้าสู่ระบบ จะไม่สามารถติดตามสถานะหรือตรวจสอบประวัติย้อนหลังได้
+                </p>
+            </div>
+        </div>
+
         <div id="loading" class="text-center py-10 text-gray-500 hidden">
             <i class="fas fa-spinner fa-spin text-3xl mb-3 text-brand-green"></i>
             <p>กำลังโหลดข้อมูล...</p>
@@ -230,9 +249,23 @@
             const emptyEl = document.getElementById('empty-state');
             const loadingEl = document.getElementById('loading');
 
+            const profile = JSON.parse(localStorage.getItem('chumsaeng_user_profile')) || {};
+            const userLineId = profile.lineUserId || null;
+
+            if (!userLineId) {
+                document.getElementById('login-required-state').classList.remove('hidden');
+                loadingEl.classList.add('hidden');
+                emptyEl.classList.add('hidden');
+                listEl.classList.add('hidden');
+                return;
+            }
+
             loadingEl.classList.remove('hidden');
-            let complaints = await API.getComplaints();
+            let allComplaints = await API.getComplaints();
             loadingEl.classList.add('hidden');
+
+            // กรองเฉพาะคำร้องที่ตรงกับ Line ID ของผู้ใช้ปัจจุบัน
+            let complaints = allComplaints.filter(c => c.line_user_id === userLineId);
 
             if (complaints.length === 0) {
                 emptyEl.classList.remove('hidden');
