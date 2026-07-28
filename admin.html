@@ -545,6 +545,16 @@
                 lengthMenu: [5, 10, 25, 50],
                 order: [[4, "desc"]]
             });
+
+            // Check if there is an auto-open ticket request (from notification redirect)
+            const autoOpen = sessionStorage.getItem('chumsaeng_auto_open_ticket');
+            if (autoOpen) {
+                sessionStorage.removeItem('chumsaeng_auto_open_ticket');
+                const index = complaints.findIndex(c => c.ticket_number === autoOpen);
+                if (index !== -1) {
+                    openModal(index);
+                }
+            }
         }
 
         // Modal Functions
@@ -859,8 +869,15 @@
             const countBadge = document.getElementById('notificationCountBadge');
             const listEl = document.getElementById('notificationList');
             
+            const lastCheckedCount = parseInt(localStorage.getItem('chumsaeng_last_bell_checked_count') || '0');
+            
             if (pendingComplaints.length > 0) {
-                if (bellBadge) bellBadge.classList.remove('hidden');
+                if (pendingComplaints.length > lastCheckedCount) {
+                    if (bellBadge) bellBadge.classList.remove('hidden');
+                } else {
+                    if (bellBadge) bellBadge.classList.add('hidden');
+                }
+                
                 if (countBadge) {
                     countBadge.textContent = pendingComplaints.length;
                     countBadge.classList.remove('hidden');
@@ -910,7 +927,19 @@
         function toggleNotificationDropdown(e) {
             e.stopPropagation();
             const dropdown = document.getElementById('notificationDropdown');
-            if (dropdown) dropdown.classList.toggle('hidden');
+            if (dropdown) {
+                const isHidden = dropdown.classList.contains('hidden');
+                dropdown.classList.toggle('hidden');
+                
+                if (isHidden) {
+                    const bellBadge = document.getElementById('bellBadge');
+                    if (bellBadge) bellBadge.classList.add('hidden');
+                    
+                    const countBadge = document.getElementById('notificationCountBadge');
+                    const countVal = countBadge ? parseInt(countBadge.textContent || '0') : 0;
+                    localStorage.setItem('chumsaeng_last_bell_checked_count', countVal);
+                }
+            }
         }
 
         // Close dropdown when clicking outside

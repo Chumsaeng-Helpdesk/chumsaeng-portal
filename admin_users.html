@@ -141,13 +141,25 @@
 
             <!-- Right: Notifications & Profile -->
             <div class="flex items-center space-x-4">
-                <button class="text-gray-400 hover:text-brand-green relative focus:outline-none">
-                    <i class="far fa-bell text-xl"></i>
-                    <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
-                </button>
+                <div class="relative">
+                    <button id="notificationBellBtn" onclick="toggleNotificationDropdown(event)" class="text-gray-400 hover:text-brand-green relative focus:outline-none flex items-center">
+                        <i class="far fa-bell text-xl"></i>
+                        <span id="bellBadge" class="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3 hidden">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                    </button>
+                    <!-- Notification Dropdown Menu -->
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-[100] py-2">
+                        <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                            <span class="font-bold text-sm text-gray-800">แจ้งเตือนใหม่</span>
+                            <span id="notificationCountBadge" class="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="notificationList" class="max-h-64 overflow-y-auto divide-y divide-gray-50">
+                            <!-- Items injected via JS -->
+                        </div>
+                    </div>
+                </div>
                 <div class="border-l pl-4 border-gray-200 flex items-center">
                     <span class="text-sm font-medium text-gray-700 mr-2 hidden sm:block">สวัสดี, Admin</span>
                     <div class="w-8 h-8 rounded-full bg-brand-green text-white flex items-center justify-center cursor-pointer shadow-sm">
@@ -397,8 +409,104 @@
             }
         }
 
+        function updateNotificationBell() {
+            const raw = localStorage.getItem('chumsaeng_complaints');
+            const complaints = raw ? JSON.parse(raw) : [];
+            const pendingComplaints = complaints.filter(c => ['pending_admin', 'pending', 'pending_director', 'pending_clerk', 'pending_mayor'].includes(c.status || 'pending_admin'));
+            
+            const bellBadge = document.getElementById('bellBadge');
+            const countBadge = document.getElementById('notificationCountBadge');
+            const listEl = document.getElementById('notificationList');
+            
+            const lastCheckedCount = parseInt(localStorage.getItem('chumsaeng_last_bell_checked_count') || '0');
+            
+            if (pendingComplaints.length > 0) {
+                if (pendingComplaints.length > lastCheckedCount) {
+                    if (bellBadge) bellBadge.classList.remove('hidden');
+                } else {
+                    if (bellBadge) bellBadge.classList.add('hidden');
+                }
+                
+                if (countBadge) {
+                    countBadge.textContent = pendingComplaints.length;
+                    countBadge.classList.remove('hidden');
+                }
+                
+                let html = '';
+                const latest = pendingComplaints.slice(0, 5);
+                const thaiTypes = {
+                    'electricity': 'ไฟฟ้าส่องสว่าง',
+                    'water': 'ประปาชำรุด',
+                    'garbage': 'ปัญหาขยะ',
+                    'road': 'ถนนชำรุด',
+                    'drainage': 'ดันท่อระบายน้ำ',
+                    'pump': 'ขอเครื่องสูบน้ำ',
+                    'other': 'เรื่องอื่นๆ'
+                };
+                
+                latest.forEach((c) => {
+                    const typeLabel = thaiTypes[c.type] || 'เรื่องอื่นๆ';
+                    const subject = c.subject || c.details || '';
+                    
+                    html += `
+                        <div onclick="openNotificationComplaint('${c.ticket_number}', event)" class="px-4 py-3 hover:bg-gray-50 transition cursor-pointer text-left">
+                            <p class="text-xs font-bold text-brand-navy mb-0.5">มีคำร้องส่งเข้ามาใหม่</p>
+                            <p class="text-xs text-gray-700 truncate font-semibold">${typeLabel}: ${subject}</p>
+                            <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-ticket-alt mr-1"></i> ${c.ticket_number}</p>
+                        </div>
+                    `;
+                });
+                if (listEl) listEl.innerHTML = html;
+            } else {
+                if (bellBadge) bellBadge.classList.add('hidden');
+                if (countBadge) countBadge.textContent = '0';
+                if (listEl) {
+                    listEl.innerHTML = `
+                        <div class="px-4 py-6 text-center text-gray-500 text-xs italic">
+                            <i class="far fa-bell-slash text-xl mb-2 text-gray-300 block"></i>
+                            ไม่มีแจ้งเตือนใหม่
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function toggleNotificationDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                const isHidden = dropdown.classList.contains('hidden');
+                dropdown.classList.toggle('hidden');
+                
+                if (isHidden) {
+                    const bellBadge = document.getElementById('bellBadge');
+                    if (bellBadge) bellBadge.classList.add('hidden');
+                    
+                    const countBadge = document.getElementById('notificationCountBadge');
+                    const countVal = countBadge ? parseInt(countBadge.textContent || '0') : 0;
+                    localStorage.setItem('chumsaeng_last_bell_checked_count', countVal);
+                }
+            }
+        }
+
+        window.addEventListener('click', () => {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function openNotificationComplaint(ticketNumber, e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            sessionStorage.setItem('chumsaeng_auto_open_ticket', ticketNumber);
+            window.location.href = 'admin.html';
+        }
+
         $(document).ready(function() {
             loadSystemUsers();
+            updateNotificationBell();
 
             // Mobile Menu Toggle Logic
             const sidebar = document.getElementById('sidebar');
