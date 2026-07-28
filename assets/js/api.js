@@ -30,7 +30,9 @@ const API = {
         } 
         else {
             // ================= MOCK MODE =================
-            return JSON.parse(localStorage.getItem('chumsaeng_complaints')) || [];
+            let complaints = JSON.parse(localStorage.getItem('chumsaeng_complaints')) || [];
+            // กรองเอาข้อมูลทดสอบ/เดโมออก
+            return complaints.filter(c => c.ticket_number !== 'R-150326-001');
         }
     },
 
@@ -159,7 +161,9 @@ const API = {
             // ...
             return true;
         } else {
-            localStorage.setItem('chumsaeng_user_profile', JSON.stringify(profileData));
+            let existing = JSON.parse(localStorage.getItem('chumsaeng_user_profile')) || {};
+            let merged = { ...existing, ...profileData };
+            localStorage.setItem('chumsaeng_user_profile', JSON.stringify(merged));
             return true;
         }
     },
